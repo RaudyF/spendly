@@ -1,29 +1,38 @@
 import { AIInsight, CategoryType, MonthlyStats } from '@/types';
 import { budgetsDB, insightsDB } from '@/lib/db';
-import { generateId } from '@/lib/utils';
+import { getPayCycleFromDate, generateId } from '@/lib/utils';
 import { CATEGORIES } from '@/lib/constants';
 import { generateLocalInsights, calculateFinancialHealth } from '@/lib/ai';
 import { StoreSet, StoreGet } from '../types';
 
 export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
   refreshInsights: () => {
-    const { expenses, incomes, profile, currentMonth } = get();
+    const { expenses, incomes, obligations, profile, currentMonth, activePayCycle } = get();
 
-    // Filter expenses for current month
-    const monthExpenses = expenses.filter((e) =>
-      e.date.startsWith(currentMonth)
-    );
+    // Filter expenses for current month and active cycle
+    const monthExpenses = expenses.filter((e) => {
+      if (!e.date.startsWith(currentMonth)) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
+    });
 
-    // Calculate monthly income
-    const monthIncomes = incomes.filter((i) =>
-      i.date.startsWith(currentMonth)
-    );
+    // Calculate income
+    const monthIncomes = incomes.filter((i) => {
+      if (!i.date.startsWith(currentMonth)) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return getPayCycleFromDate(i.date) === activePayCycle;
+    });
     const totalIncome =
       monthIncomes.reduce((sum, i) => sum + i.amount, 0) ||
       profile?.monthlyIncome ||
       0;
 
     // Calculate category totals
+    const activeObligations = obligations.filter(
+      (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
+    );
+    const committed = activeObligations.filter((o) => !o.isPaid).reduce((sum, o) => sum + o.amount, 0);
+
     const byCategory: Record<CategoryType, number> = {} as Record<
       CategoryType,
       number
@@ -38,12 +47,15 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
     });
 
     const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
+    const freeAvailable = totalIncome - committed - totalExpenses;
 
     const stats: MonthlyStats = {
       month: currentMonth,
       totalIncome,
       totalExpenses,
       savings: totalIncome - totalExpenses,
+      committed,
+      freeAvailable,
       byCategory,
     };
 
@@ -79,15 +91,20 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
   },
 
   recalculateStats: () => {
-    const { expenses, incomes, budgets, goals, profile, currentMonth } = get();
+    const { expenses, incomes, obligations, budgets, goals, profile, currentMonth, activePayCycle } = get();
 
-    // Filter for current month
-    const monthExpenses = expenses.filter((e) =>
-      e.date.startsWith(currentMonth)
-    );
-    const monthIncomes = incomes.filter((i) =>
-      i.date.startsWith(currentMonth)
-    );
+    // Filter for current month and active cycle
+    const monthExpenses = expenses.filter((e) => {
+      if (!e.date.startsWith(currentMonth)) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
+    });
+    
+    const monthIncomes = incomes.filter((i) => {
+      if (!i.date.startsWith(currentMonth)) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return getPayCycleFromDate(i.date) === activePayCycle;
+    });
 
     // Calculate totals
     const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
@@ -97,6 +114,11 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
       0;
 
     // Calculate by category
+    const activeObligations = obligations.filter(
+      (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
+    );
+    const committed = activeObligations.filter((o) => !o.isPaid).reduce((sum, o) => sum + o.amount, 0);
+
     const byCategory: Record<CategoryType, number> = {} as Record<
       CategoryType,
       number
@@ -110,11 +132,16 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
         (byCategory[expense.category] || 0) + expense.amount;
     });
 
+    const freeAvailable = totalIncome - committed - totalExpenses;
+
     const monthlyStats: MonthlyStats = {
       month: currentMonth,
+      payCycle: activePayCycle,
       totalIncome,
       totalExpenses,
       savings: totalIncome - totalExpenses,
+      committed,
+      freeAvailable,
       byCategory,
     };
 
@@ -167,6 +194,11 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
 
   setCurrentMonth: (month: string) => {
     set({ currentMonth: month });
+    get().recalculateStats();
+  },
+  
+  setActivePayCycle: (cycle: string) => {
+    set({ activePayCycle: cycle as any });
     get().recalculateStats();
   },
 });

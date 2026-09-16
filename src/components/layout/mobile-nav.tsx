@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Logo } from '@/components/ui/logo';
 import {
   Menu,
   X,
@@ -134,12 +135,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
               <h1 className="text-xl font-bold text-surface-900 dark:text-white">{title}</h1>
             ) : (
               <Link href="/dashboard" className="flex items-center gap-2">
-                <img 
-                  src="/images/logo.svg" 
-                  alt="Spendly" 
-                  className="w-8 h-8 rounded-lg shadow-soft-sm"
-                />
-                <span className="font-bold text-surface-900 dark:text-white">Spendly</span>
+                <Logo className="scale-75 origin-left" iconOnly={!title} />
               </Link>
             )}
           </div>
@@ -177,12 +173,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   className="flex items-center gap-2"
                   onClick={() => setMenuOpen(false)}
                 >
-                  <img 
-                    src="/images/logo.svg" 
-                    alt="Spendly" 
-                    className="w-10 h-10 rounded-xl shadow-soft-sm"
-                  />
-                  <span className="text-xl font-bold text-surface-900 dark:text-white">Spendly</span>
+                  <Logo className="scale-90 origin-left" />
                 </Link>
                 <button
                   onClick={() => setMenuOpen(false)}
@@ -233,7 +224,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                   ) : (
                     <Moon className="w-5 h-5" />
                   )}
-                  <span>{resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+                  <span>{resolvedTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
                 </button>
 
                 {user && (
@@ -247,7 +238,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                     )}
                   >
                     <LogOut className="w-5 h-5" />
-                    <span>Sign Out</span>
+                    <span>Cerrar Sesión</span>
                   </button>
                 )}
               </div>

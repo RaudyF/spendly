@@ -80,6 +80,7 @@ export const getCategoryById = (id: CategoryType): CategoryInfo => {
 
 // Currency configurations
 export const CURRENCIES = [
+  { code: 'DOP', symbol: 'RD$', name: 'Peso Dominicano' },
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },

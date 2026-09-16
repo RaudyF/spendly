@@ -74,24 +74,24 @@ export const SettingsPage: React.FC = () => {
   return (
     <div className="p-4 lg:p-8 max-w-2xl mx-auto pb-24 lg:pb-8">
       <div className="mb-8">
-        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Settings</h1>
-        <p className="text-surface-500 mt-1">Manage your account and preferences</p>
+        <h1 className="text-2xl font-bold text-surface-900 dark:text-white">Ajustes</h1>
+        <p className="text-surface-500 mt-1">Administra tu cuenta y preferencias</p>
       </div>
 
-      <SettingsSection title="Profile">
+      <SettingsSection title="Perfil">
         <div className="p-5">
           <div className="flex items-center gap-4 mb-5">
             <Avatar
               src={profile?.photoURL}
-              name={profile?.name || 'User'}
+              name={profile?.name || 'Usuario'}
               size="xl"
             />
             <div className="flex-1">
               <h3 className="text-lg font-semibold text-surface-900 dark:text-white">
-                {profile?.name || 'Guest User'}
+                {profile?.name || 'Usuario Invitado'}
               </h3>
               <p className="text-sm text-surface-500">
-                {profile?.email || 'No email set'}
+                {profile?.email || 'Sin correo electrónico'}
               </p>
             </div>
           </div>
@@ -101,22 +101,22 @@ export const SettingsPage: React.FC = () => {
             onClick={() => setShowEditProfile(true)}
             leftIcon={<User className="w-4 h-4" />}
           >
-            Edit Profile
+            Editar Perfil
           </Button>
         </div>
       </SettingsSection>
 
       {/* Account & Security */}
-      <SettingsSection title="Account & Security" description="Manage your account security">
+      <SettingsSection title="Cuenta y Seguridad" description="Administra la seguridad de tu cuenta">
         <SettingsItem
           icon={user?.emailVerified ? <CheckCircle className="w-5 h-5" /> : <Mail className="w-5 h-5" />}
           iconColor={user?.emailVerified 
             ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
             : "bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
           }
-          title="Email Verification"
-          description={user?.emailVerified ? "Your email is verified" : "Verify your email address"}
-          badge={user?.emailVerified ? "Verified" : "Not Verified"}
+          title="Verificación de Email"
+          description={user?.emailVerified ? "Tu correo está verificado" : "Verifica tu dirección de correo"}
+          badge={user?.emailVerified ? "Verificado" : "No Verificado"}
           badgeVariant={user?.emailVerified ? "success" : "warning"}
           action={!user?.emailVerified && (
             <Button
@@ -125,28 +125,28 @@ export const SettingsPage: React.FC = () => {
               onClick={handleSendVerification}
               disabled={verificationSent}
             >
-              {verificationSent ? "Email Sent!" : "Send Link"}
+              {verificationSent ? "¡Correo Enviado!" : "Enviar Enlace"}
             </Button>
           )}
         />
         <SettingsItem
           icon={<UserX className="w-5 h-5" />}
           iconColor="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-          title="Delete Account"
-          description="Permanently delete your account and data"
+          title="Eliminar Cuenta"
+          description="Elimina permanentemente tu cuenta y datos"
           onClick={() => setShowDeleteAccountConfirm(true)}
         />
       </SettingsSection>
 
       {/* Appearance */}
-      <SettingsSection title="Appearance" description="Customize how the app looks">
+      <SettingsSection title="Apariencia" description="Personaliza cómo se ve la app">
         <div className="p-5">
-          <p className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Theme</p>
+          <p className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Tema</p>
           <ThemeSelector />
         </div>
         <Divider className="my-0" />
         <div className="p-5">
-          <p className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Accent Color</p>
+          <p className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">Color de Acento</p>
           <AccentColorSelector />
         </div>
         <Divider className="my-0" />
@@ -154,37 +154,37 @@ export const SettingsPage: React.FC = () => {
           <Switch
             checked={compactMode}
             onChange={setCompactMode}
-            label="Compact Mode"
-            description="Use smaller spacing and fonts"
+            label="Modo Compacto"
+            description="Usar espaciado y fuentes más pequeñas"
           />
           <Switch
             checked={showAnimations}
             onChange={setShowAnimations}
-            label="Animations"
-            description="Enable smooth transitions"
+            label="Animaciones"
+            description="Habilitar transiciones suaves"
           />
         </div>
       </SettingsSection>
 
       {/* Preferences */}
-      <SettingsSection title="Preferences" description="Configure app behavior">
+      <SettingsSection title="Preferencias" description="Configura el comportamiento de la app">
         <SettingsItem
           icon={<Globe className="w-5 h-5" />}
-          title="Currency"
+          title="Moneda"
           description={`${currentCurrency.name} (${currentCurrency.symbol})`}
           onClick={() => setShowCurrencySelector(true)}
         />
         <SettingsItem
           icon={<Calendar className="w-5 h-5" />}
-          title="Week Starts On"
+          title="Inicio de Semana"
           action={
             <Select
               value="monday"
               onChange={() => {}}
               options={[
-                { value: 'sunday', label: 'Sunday' },
-                { value: 'monday', label: 'Monday' },
-                { value: 'saturday', label: 'Saturday' },
+                { value: 'sunday', label: 'Domingo' },
+                { value: 'monday', label: 'Lunes' },
+                { value: 'saturday', label: 'Sábado' },
               ]}
               className="w-32"
             />
@@ -192,15 +192,15 @@ export const SettingsPage: React.FC = () => {
         />
         <SettingsItem
           icon={<Eye className="w-5 h-5" />}
-          title="Default View"
+          title="Vista Predeterminada"
           action={
             <Select
               value="dashboard"
               onChange={() => {}}
               options={[
-                { value: 'dashboard', label: 'Dashboard' },
-                { value: 'expenses', label: 'Expenses' },
-                { value: 'budget', label: 'Budget' },
+                { value: 'dashboard', label: 'Resumen' },
+                { value: 'expenses', label: 'Movimientos' },
+                { value: 'budget', label: 'Presupuesto' },
               ]}
               className="w-32"
             />
@@ -209,38 +209,38 @@ export const SettingsPage: React.FC = () => {
       </SettingsSection>
 
       {/* Notifications */}
-      <SettingsSection title="Notifications" description="Control when we notify you">
+      <SettingsSection title="Notificaciones" description="Controla cuándo te notificamos">
         <div className="p-5 space-y-4">
           <Switch
             checked={budgetAlerts}
             onChange={setBudgetAlerts}
-            label="Budget Alerts"
-            description="Get notified when approaching budget limits"
+            label="Alertas de Presupuesto"
+            description="Recibe notificaciones cuando te acerques a los límites"
           />
           <Switch
             checked={weeklyReports}
             onChange={setWeeklyReports}
-            label="Weekly Reports"
-            description="Receive weekly spending summaries"
+            label="Reportes Semanales"
+            description="Recibe resúmenes de gastos semanales"
           />
         </div>
       </SettingsSection>
 
-      <SettingsSection title="AI & Integrations" description="Configure AI features">
+      <SettingsSection title="IA e Integraciones" description="Configura funciones de IA">
         <SettingsItem
           icon={<Key className="w-5 h-5" />}
           iconColor="bg-secondary-100 dark:bg-secondary-900/30 text-secondary-600 dark:text-secondary-400"
-          title="API Keys"
-          description="Configure Google AI and other services"
+          title="Claves API"
+          description="Configura Google AI y otros servicios"
           onClick={() => setShowAPIKeys(true)}
         />
         <SettingsItem
           icon={<Zap className="w-5 h-5" />}
           iconColor="bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400"
-          title="AI Features"
+          title="Funciones de IA"
           badge="Beta"
           badgeVariant="warning"
-          description="Smart categorization and insights"
+          description="Categorización e información inteligente"
           action={<Switch checked={true} onChange={() => {}} />}
         />
       </SettingsSection>
@@ -248,22 +248,22 @@ export const SettingsPage: React.FC = () => {
       {/* Data & Sync */}
       <DataSyncSection />
 
-      <SettingsSection title="About">
+      <SettingsSection title="Acerca de">
         <SettingsItem
           icon={<Shield className="w-5 h-5" />}
           iconColor="bg-accent-100 dark:bg-accent-900/30 text-accent-600 dark:text-accent-400"
-          title="Privacy"
-          description="Your data stays on your device"
+          title="Privacidad"
+          description="Tus datos permanecen en tu dispositivo"
         />
         <SettingsItem
           icon={<HelpCircle className="w-5 h-5" />}
-          title="Help & Support"
-          description="Get help using Spendly"
+          title="Ayuda y Soporte"
+          description="Obtén ayuda usando SaldoClaro"
           onClick={() => window.open('https://github.com', '_blank')}
         />
         <div className="p-5 text-center">
-          <p className="text-sm text-surface-500">Spendly v1.0.0</p>
-          <p className="text-xs text-surface-400 mt-1">Built with care for better financial health</p>
+          <p className="text-sm text-surface-500">SaldoClaro v1.0.0</p>
+          <p className="text-xs text-surface-400 mt-1">Construido con cuidado para una mejor salud financiera</p>
         </div>
       </SettingsSection>
 
@@ -288,9 +288,9 @@ export const SettingsPage: React.FC = () => {
         isOpen={showDeleteAccountConfirm}
         onClose={() => setShowDeleteAccountConfirm(false)}
         onConfirm={handleDeleteAccount}
-        title="Delete Account?"
-        description="This will permanently delete your account and all associated data. You will be logged out immediately. This action cannot be undone."
-        confirmText="Delete Account"
+        title="¿Eliminar Cuenta?"
+        description="Esto eliminará permanentemente tu cuenta y todos los datos asociados. Se cerrará la sesión de inmediato. Esta acción no se puede deshacer."
+        confirmText="Eliminar Cuenta"
         variant="danger"
       />
     </div>

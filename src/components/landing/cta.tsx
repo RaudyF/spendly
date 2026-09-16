@@ -34,7 +34,7 @@ export function CTA({ onGetStarted }: CTAProps) {
               viewport={{ once: true }}
               className="text-3xl md:text-4xl font-bold text-white tracking-tight font-display"
             >
-              Start your journey to financial freedom
+              Toma el control de tus finanzas hoy
             </motion.h2>
             <motion.p
               initial={{ opacity: 0, y: 20 }}
@@ -43,7 +43,7 @@ export function CTA({ onGetStarted }: CTAProps) {
               transition={{ delay: 0.1 }}
               className="mt-4 text-lg text-surface-300"
             >
-              Free to use. No credit card required. Set up in under 2 minutes.
+              Totalmente gratuito. Entiende tu dinero por quincenas reales. Configúralo en 2 minutos.
             </motion.p>
             <motion.div
               initial={{ opacity: 0, y: 20 }}
@@ -57,7 +57,7 @@ export function CTA({ onGetStarted }: CTAProps) {
                 className="group w-full sm:w-auto px-8 py-4 text-base font-medium text-surface-900 bg-white rounded-2xl hover:bg-surface-100 transition-colors shadow-soft-lg"
               >
                 <span className="flex items-center justify-center gap-2">
-                  Get started free
+                  Comienza gratis
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </span>
               </button>

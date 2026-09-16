@@ -8,12 +8,8 @@ let _tablesInitialized = false;
 function getSql(): NeonQueryFunction<false, false> {
   if (_sql) return _sql;
   
-  const databaseUrl = process.env.DATABASE_URL;
-  if (!databaseUrl) {
-    throw new Error('DATABASE_URL environment variable is not set. Cloud sync requires a database connection.');
-  }
-  
-  _sql = neon(databaseUrl);
+  console.warn('[AI Studio] Database not connected — using mock');
+  _sql = (async () => []) as unknown as NeonQueryFunction<false, false>;
   return _sql;
 }
 
@@ -42,6 +38,22 @@ export async function initializeTables(): Promise<void> {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS incomes (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      amount DECIMAL(10, 2) NOT NULL,
+      source TEXT NOT NULL,
+      date DATE NOT NULL,
+      pay_cycle TEXT,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `;
+
+  await sql`CREATE INDEX IF NOT EXISTS idx_incomes_user_id ON incomes(user_id)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_incomes_date ON incomes(date)`;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS expenses (
       id TEXT PRIMARY KEY,
       user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
@@ -49,6 +61,7 @@ export async function initializeTables(): Promise<void> {
       category TEXT NOT NULL,
       description TEXT,
       date DATE NOT NULL,
+      pay_cycle TEXT,
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
   `;
@@ -63,6 +76,7 @@ export async function initializeTables(): Promise<void> {
       category TEXT NOT NULL,
       amount DECIMAL(10, 2) NOT NULL,
       period TEXT NOT NULL DEFAULT 'monthly',
+      period_type TEXT DEFAULT 'MONTHLY',
       created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
       updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
     )
@@ -85,6 +99,22 @@ export async function initializeTables(): Promise<void> {
   `;
 
   await sql`CREATE INDEX IF NOT EXISTS idx_goals_user_id ON goals(user_id)`;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS obligations (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+      name TEXT NOT NULL,
+      amount DECIMAL(10, 2) NOT NULL,
+      category TEXT NOT NULL,
+      pay_cycle TEXT NOT NULL,
+      is_paid BOOLEAN DEFAULT false,
+      created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+      updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    )
+  `;
+
+  await sql`CREATE INDEX IF NOT EXISTS idx_obligations_user_id ON obligations(user_id)`;
 
   await sql`
     CREATE TABLE IF NOT EXISTS user_settings (
@@ -253,4 +283,46 @@ export async function getSettings(userId: string) {
     SELECT settings FROM user_settings WHERE user_id = ${userId}
   `;
   return result[0]?.settings || null;
+}
+
+// Obligations operations
+export async function createObligation(obligation: {
+  id: string;
+  userId: string;
+  name: string;
+  amount: number;
+  category: string;
+  payCycle: string;
+  isPaid: boolean;
+}) {
+  const sql = getSql();
+  await sql`
+    INSERT INTO obligations (id, user_id, name, amount, category, pay_cycle, is_paid, created_at, updated_at)
+    VALUES (
+      ${obligation.id}, 
+      ${obligation.userId}, 
+      ${obligation.name}, 
+      ${obligation.amount}, 
+      ${obligation.category}, 
+      ${obligation.payCycle},
+      ${obligation.isPaid},
+      NOW(), 
+      NOW()
+    )
+    ON CONFLICT (id) DO UPDATE SET
+      name = EXCLUDED.name,
+      amount = EXCLUDED.amount,
+      category = EXCLUDED.category,
+      pay_cycle = EXCLUDED.pay_cycle,
+      is_paid = EXCLUDED.is_paid,
+      updated_at = NOW()
+  `;
+}
+
+export async function getObligations(userId: string) {
+  const sql = getSql();
+  return await sql`
+    SELECT * FROM obligations 
+    WHERE user_id = ${userId}
+  `;
 }

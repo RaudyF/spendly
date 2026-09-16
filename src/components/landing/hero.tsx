@@ -39,7 +39,7 @@ export function Hero({ onGetStarted }: HeroProps) {
           >
             <Sparkles className="w-4 h-4 text-primary-600 dark:text-primary-400" />
             <span className="text-sm font-medium text-primary-700 dark:text-primary-300">
-              AI-powered insights
+              SaldoClaro - Tu dinero, sin dudas.
             </span>
           </motion.div>
 
@@ -49,10 +49,10 @@ export function Hero({ onGetStarted }: HeroProps) {
             transition={{ duration: 0.5, delay: 0.2 }}
             className="text-3xl md:text-6xl lg:text-7xl font-bold text-surface-900 dark:text-white tracking-tight leading-[1.1] font-display"
           >
-            Take control of
+            Controla tus
             <br />
             <span className="text-transparent bg-clip-text bg-gradient-to-r from-primary-500 via-primary-600 to-secondary-500">
-              your money
+              quincenas
             </span>
           </motion.h1>
 
@@ -62,8 +62,7 @@ export function Hero({ onGetStarted }: HeroProps) {
             transition={{ duration: 0.5, delay: 0.3 }}
             className="mt-4 md:mt-6 text-base md:text-xl text-surface-600 dark:text-surface-400 max-w-xl mx-auto leading-relaxed"
           >
-            Track spending, set budgets, and reach your financial goals with intelligent insights
-            that adapt to your lifestyle.
+            Conoce exactamente cuánto dinero tienes libre, organiza tus obligaciones y toma el control de tu futuro financiero.
           </motion.p>
         </div>
 
@@ -81,7 +80,7 @@ export function Hero({ onGetStarted }: HeroProps) {
             className="group w-full sm:w-auto px-8 py-4 text-base font-medium text-white bg-surface-900 dark:bg-white dark:text-surface-900 rounded-2xl hover:bg-surface-800 dark:hover:bg-surface-100 transition-all shadow-soft-lg hover:shadow-soft-xl hover:-translate-y-0.5"
           >
             <span className="flex items-center justify-center gap-2">
-              Start for free
+              Comenzar ahora
               <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
             </span>
           </button>
@@ -90,7 +89,7 @@ export function Hero({ onGetStarted }: HeroProps) {
             href="#how-it-works"
             className="w-full sm:w-auto px-8 py-4 text-base font-medium text-surface-700 dark:text-surface-300 rounded-2xl hover:bg-surface-100 dark:hover:bg-surface-800 transition-colors text-center"
           >
-            See how it works
+            Ver cómo funciona
           </a>
         </motion.div>
       </div>
@@ -119,7 +118,7 @@ export function Hero({ onGetStarted }: HeroProps) {
                 </div>
                 <div className="flex-1 mx-4">
                   <div className="max-w-md mx-auto h-7 rounded-lg bg-surface-100 dark:bg-surface-800 flex items-center justify-center">
-                    <span className="text-xs text-surface-400">spendly.app/dashboard</span>
+                    <span className="text-xs text-surface-400">saldoclaro.app/dashboard</span>
                   </div>
                 </div>
               </div>

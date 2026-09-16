@@ -44,12 +44,12 @@ export const GoalsPage: React.FC = () => {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
           <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">
-            Savings Goals
+            Metas de Ahorro
           </h1>
-          <p className="text-neutral-500">Track your progress towards financial goals</p>
+          <p className="text-neutral-500">Mide tu progreso hacia tus metas</p>
         </div>
         <Button leftIcon={<Plus className="w-5 h-5" />} onClick={() => setShowForm(true)}>
-          New Goal
+          Nueva Meta
         </Button>
       </div>
 
@@ -57,19 +57,19 @@ export const GoalsPage: React.FC = () => {
       {goals.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Card className="text-center">
-            <p className="text-sm text-neutral-500 mb-1">Total Saved</p>
+            <p className="text-sm text-neutral-500 mb-1">Ahorro Actual</p>
             <p className="text-2xl font-bold gradient-text">
               {formatCurrency(totalSaved, profile?.currency)}
             </p>
           </Card>
           <Card className="text-center">
-            <p className="text-sm text-neutral-500 mb-1">Total Target</p>
+            <p className="text-sm text-neutral-500 mb-1">Meta Total</p>
             <p className="text-2xl font-bold text-neutral-900 dark:text-white">
               {formatCurrency(totalTarget, profile?.currency)}
             </p>
           </Card>
           <Card className="text-center">
-            <p className="text-sm text-neutral-500 mb-1">Goals Completed</p>
+            <p className="text-sm text-neutral-500 mb-1">Metas Completadas</p>
             <p className="text-2xl font-bold text-green-500">
               {completedGoals} / {goals.length}
             </p>
@@ -84,13 +84,13 @@ export const GoalsPage: React.FC = () => {
             <Target className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">
-            No Goals Yet
+            Sin Metas
           </h2>
           <p className="text-neutral-500 mb-6 max-w-sm mx-auto">
-            Set your first savings goal and start building towards your financial dreams.
+            Crea tu primera meta para empezar a ahorrar.
           </p>
           <Button onClick={() => setShowForm(true)} leftIcon={<Plus className="w-5 h-5" />}>
-            Create Your First Goal
+            Crear Tu Primera Meta
           </Button>
         </Card>
       ) : (
@@ -116,7 +116,7 @@ export const GoalsPage: React.FC = () => {
           setShowForm(false);
           setEditingGoal(undefined);
         }}
-        title={editingGoal ? 'Edit Goal' : 'Create New Goal'}
+        title={editingGoal ? 'Actualizar Meta' : 'Crear Nueva Meta'}
         size="md"
       >
         <GoalForm
@@ -132,7 +132,7 @@ export const GoalsPage: React.FC = () => {
       <Modal
         isOpen={!!addFundsGoal}
         onClose={() => setAddFundsGoal(undefined)}
-        title={`Add to ${addFundsGoal?.name}`}
+        title={`Aportar a ${addFundsGoal?.name}`}
         size="sm"
       >
         {addFundsGoal && (
@@ -145,9 +145,9 @@ export const GoalsPage: React.FC = () => {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Goal?"
-        description="This will permanently delete this savings goal."
-        confirmText="Delete"
+        title="¿Eliminar Meta?"
+        description="Esta acción eliminará la meta permanentemente."
+        confirmText="Eliminar"
         variant="danger"
       />
     </div>

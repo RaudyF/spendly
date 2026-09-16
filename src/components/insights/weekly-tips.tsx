@@ -52,9 +52,9 @@ export const WeeklyTips: React.FC = () => {
           </div>
           <div>
             <h3 className="font-semibold text-surface-900 dark:text-white">
-              Weekly Tips
+              Consejos Semanales
             </h3>
-            <p className="text-xs text-surface-500">Personalized advice</p>
+            <p className="text-xs text-surface-500">Asesoramiento personalizado</p>
           </div>
         </div>
         <Button

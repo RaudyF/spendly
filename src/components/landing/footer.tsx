@@ -2,24 +2,20 @@
 
 import React from 'react';
 import { Github, Twitter, Linkedin } from 'lucide-react';
+import { Logo } from '@/components/ui/logo';
 
 const footerLinks = {
   product: [
-    { name: 'Features', href: '#features' },
-    { name: 'How it works', href: '#how-it-works' },
-    { name: 'Pricing', href: '#' },
-    { name: 'FAQ', href: '#' },
+    { name: 'Características', href: '#features' },
+    { name: 'Cómo funciona', href: '#how-it-works' },
   ],
   company: [
-    { name: 'About', href: '#' },
-    { name: 'Blog', href: '#' },
-    { name: 'Careers', href: '#' },
-    { name: 'Contact', href: '#' },
+    { name: 'Acerca de', href: '#' },
+    { name: 'Contacto', href: '#' },
   ],
   legal: [
-    { name: 'Privacy Policy', href: '#' },
-    { name: 'Terms of Service', href: '#' },
-    { name: 'Cookie Policy', href: '#' },
+    { name: 'Privacidad', href: '#' },
+    { name: 'Términos', href: '#' },
   ],
 };
 
@@ -34,11 +30,10 @@ export function Footer() {
           {/* Brand column */}
           <div className="col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <img src="/images/logo.svg" alt="Spendly" className="w-9 h-9 rounded-xl" />
-              <span className="font-semibold text-white text-lg tracking-tight">Spendly</span>
+              <Logo className="scale-90 origin-left" />
             </div>
             <p className="text-surface-400 text-sm leading-relaxed max-w-xs mb-6">
-              Take control of your finances with intelligent tracking, budgeting, and AI-powered insights.
+              Toma el control de tus finanzas dividiendo tus ingresos en quincenas reales. Conoce exactamente cuánto dinero tienes libre.
             </p>
             <div className="flex items-center gap-4">
               <a
@@ -70,7 +65,7 @@ export function Footer() {
 
           {/* Product links */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Product</h3>
+            <h3 className="text-sm font-semibold text-white mb-4">Producto</h3>
             <ul className="space-y-3">
               {footerLinks.product.map((link) => (
                 <li key={link.name}>
@@ -84,7 +79,7 @@ export function Footer() {
 
           {/* Company links */}
           <div>
-            <h3 className="text-sm font-semibold text-white mb-4">Company</h3>
+            <h3 className="text-sm font-semibold text-white mb-4">Empresa</h3>
             <ul className="space-y-3">
               {footerLinks.company.map((link) => (
                 <li key={link.name}>
@@ -113,7 +108,7 @@ export function Footer() {
 
         {/* Bottom bar */}
         <div className="py-6 border-t border-surface-800 flex flex-col md:flex-row items-center justify-between gap-4">
-          <div className="text-sm text-surface-500">{currentYear} Spendly. All rights reserved.</div>
+          <div className="text-sm text-surface-500">{currentYear} SaldoClaro. Todos los derechos reservados.</div>
           <div className="text-sm text-surface-500">
             Built by{' '}
             <a

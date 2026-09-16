@@ -2,11 +2,13 @@ import {
   Expense,
   Income,
   Budget,
+  Obligation,
   SavingsGoal,
   UserProfile,
   AIInsight,
   CategoryType,
   MonthlyStats,
+  PayCycle,
 } from '@/types';
 
 export interface SyncState {
@@ -20,6 +22,7 @@ export interface AppState {
   expenses: Expense[];
   incomes: Income[];
   budgets: Budget[];
+  obligations: Obligation[];
   goals: SavingsGoal[];
   insights: AIInsight[];
   profile: UserProfile | null;
@@ -28,6 +31,7 @@ export interface AppState {
   isLoading: boolean;
   isOnboarded: boolean;
   currentMonth: string;
+  activePayCycle: PayCycle;
   theme: 'light' | 'dark' | 'system';
   currentUserId: string | null;
   
@@ -56,6 +60,11 @@ export interface AppState {
   setBudget: (category: CategoryType, limit: number) => Promise<void>;
   initializeDefaultBudgets: (monthlyIncome: number) => Promise<void>;
 
+  // Obligation actions
+  addObligation: (obligation: Omit<Obligation, 'id' | 'createdAt' | 'updatedAt'>) => Promise<Obligation>;
+  updateObligation: (id: string, updates: Partial<Obligation>) => Promise<void>;
+  deleteObligation: (id: string) => Promise<void>;
+
   // Goal actions
   addGoal: (goal: Omit<SavingsGoal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<SavingsGoal>;
   updateGoal: (id: string, updates: Partial<SavingsGoal>) => Promise<void>;
@@ -78,6 +87,7 @@ export interface AppState {
   // Utility
   recalculateStats: () => void;
   setCurrentMonth: (month: string) => void;
+  setActivePayCycle: (cycle: PayCycle) => void;
   resetStore: () => Promise<void>;
 }
 

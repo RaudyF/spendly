@@ -3,6 +3,39 @@ import { twMerge } from 'tailwind-merge';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
 import { CURRENCIES } from './constants';
 
+import { PayCycle } from '@/types';
+
+// Get pay cycle (Q1 or Q2) from date
+export function getPayCycleFromDate(date: string | Date): PayCycle {
+  const dateObj = typeof date === 'string' ? parseISO(date) : date;
+  const day = dateObj.getDate();
+  return day <= 15 ? 'Q1' : 'Q2';
+}
+
+// Get the date range for a specific pay cycle in a given month (YYYY-MM)
+export function getPayCycleDates(monthStr: string, cycle: PayCycle): { start: Date; end: Date } {
+  const [year, month] = monthStr.split('-').map(Number);
+  const baseDate = new Date(year, month - 1, 1);
+  
+  if (cycle === 'Q1') {
+    return {
+      start: baseDate,
+      end: new Date(year, month - 1, 15, 23, 59, 59, 999)
+    };
+  } else if (cycle === 'Q2') {
+    return {
+      start: new Date(year, month - 1, 16),
+      end: endOfMonth(baseDate)
+    };
+  }
+  
+  // MONTHLY fallback
+  return {
+    start: baseDate,
+    end: endOfMonth(baseDate)
+  };
+}
+
 // Merge Tailwind classes
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -21,7 +54,17 @@ export function formatCurrency(
       notation: 'compact',
       maximumFractionDigits: 1,
     }).format(amount);
+    
+    if (currencyCode === 'DOP') return `RD$${formatted}`;
     return `${currency.symbol}${formatted}`;
+  }
+
+  if (currencyCode === 'DOP') {
+    const formatted = new Intl.NumberFormat('en-US', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 2,
+    }).format(amount);
+    return `RD$${formatted}`;
   }
 
   return new Intl.NumberFormat('en-US', {
@@ -102,9 +145,9 @@ export function smoothScrollTo(elementId: string): void {
 // Get greeting based on time
 export function getGreeting(): string {
   const hour = new Date().getHours();
-  if (hour < 12) return 'Good morning';
-  if (hour < 18) return 'Good afternoon';
-  return 'Good evening';
+  if (hour < 12) return 'Buenos días';
+  if (hour < 18) return 'Buenas tardes';
+  return 'Buenas noches';
 }
 
 // Format relative time

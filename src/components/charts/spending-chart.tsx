@@ -20,15 +20,33 @@ import { CustomTooltip } from './custom-tooltip';
 export const SpendingChart: React.FC = () => {
   const expenses = useStore((state) => state.expenses);
   const profile = useStore((state) => state.profile);
+  const currentMonth = useStore((state) => state.currentMonth);
+  const activePayCycle = useStore((state) => state.activePayCycle);
   const { resolvedTheme } = useTheme();
 
-  // Get last 30 days of data
-  const last30Days = React.useMemo(() => {
+  // Get data based on current activePayCycle
+  const chartData = React.useMemo(() => {
     const days = [];
-    const today = new Date();
     
-    for (let i = 29; i >= 0; i--) {
-      const date = subDays(today, i);
+    // Parse current month (e.g. '2024-03')
+    const [yearStr, monthStr] = currentMonth.split('-');
+    const year = parseInt(yearStr, 10);
+    const monthIndex = parseInt(monthStr, 10) - 1; // 0-based
+    
+    const startDate = new Date(year, monthIndex, 1);
+    
+    // Determine start and end days
+    let startDay = 1;
+    let endDay = new Date(year, monthIndex + 1, 0).getDate(); // Last day of month
+    
+    if (activePayCycle === 'Q1') {
+      endDay = 15;
+    } else if (activePayCycle === 'Q2') {
+      startDay = 16;
+    }
+    
+    for (let day = startDay; day <= endDay; day++) {
+      const date = new Date(year, monthIndex, day);
       const dayExpenses = expenses.filter((e) => {
         const expenseDate = parseISO(e.date);
         return isSameDay(expenseDate, date);
@@ -42,7 +60,7 @@ export const SpendingChart: React.FC = () => {
     }
     
     return days;
-  }, [expenses]);
+  }, [expenses, currentMonth, activePayCycle]);
 
   const gridColor = resolvedTheme === 'dark' ? '#404040' : '#e5e5e5';
   const textColor = resolvedTheme === 'dark' ? '#a3a3a3' : '#737373';
@@ -50,7 +68,7 @@ export const SpendingChart: React.FC = () => {
   return (
     <div className="h-64">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={last30Days} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
+        <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 0, bottom: 0 }}>
           <defs>
             <linearGradient id="spendingGradient" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.3} />

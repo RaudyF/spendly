@@ -1,9 +1,9 @@
-import { expensesDB, budgetsDB, goalsDB, profileDB } from '@/lib/db';
+import { expensesDB, budgetsDB, goalsDB, profileDB, obligationsDB } from '@/lib/db';
 import { StoreSet, StoreGet } from '../types';
 
 export const createSyncActions = (set: StoreSet, get: StoreGet) => ({
   syncToCloud: async () => {
-    const { currentUserId, expenses, budgets, goals, profile } = get();
+    const { currentUserId, expenses, budgets, goals, profile, obligations } = get();
     
     if (!currentUserId) {
       return { success: false, error: 'Not logged in. Please sign in to sync.' };
@@ -23,6 +23,7 @@ export const createSyncActions = (set: StoreSet, get: StoreGet) => ({
           budgets,
           goals,
           profile,
+          obligations,
         }),
       });
 
@@ -70,13 +71,14 @@ export const createSyncActions = (set: StoreSet, get: StoreGet) => ({
         throw new Error(data.error || 'Failed to sync from cloud');
       }
 
-      const { expenses, budgets, goals, profile } = data.data;
+      const { expenses, budgets, goals, obligations, profile } = data.data;
 
       // Clear local IndexedDB and save cloud data
       await Promise.all([
         expensesDB.clear(),
         budgetsDB.clear(),
         goalsDB.clear(),
+        obligationsDB.clear(),
       ]);
 
       // Save expenses to IndexedDB
@@ -94,6 +96,13 @@ export const createSyncActions = (set: StoreSet, get: StoreGet) => ({
         await goalsDB.add(goal);
       }
 
+      // Save obligations to IndexedDB
+      if (obligations && Array.isArray(obligations)) {
+        for (const obligation of obligations) {
+          await obligationsDB.add(obligation);
+        }
+      }
+
       // Update profile if exists
       if (profile) {
         await profileDB.set({ ...profile, id: 'profile' });
@@ -104,6 +113,7 @@ export const createSyncActions = (set: StoreSet, get: StoreGet) => ({
         expenses,
         budgets,
         goals,
+        obligations: obligations || [],
         profile: profile || state.profile,
         isOnboarded: profile?.onboardingCompleted || state.isOnboarded,
         sync: {

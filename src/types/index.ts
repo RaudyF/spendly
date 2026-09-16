@@ -1,4 +1,6 @@
-// Type definitions for the Spendly App
+// Type definitions for the SaldoClaro App
+
+export type PayCycle = 'Q1' | 'Q2' | 'MONTHLY';
 
 export interface Expense {
   id: string;
@@ -10,8 +12,10 @@ export interface Expense {
   updatedAt: string;
   isRecurring?: boolean;
   recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
+  payCycle?: PayCycle;
   notes?: string;
   tags?: string[];
+  obligationId?: string;
 }
 
 export interface Income {
@@ -23,6 +27,7 @@ export interface Income {
   updatedAt: string;
   isRecurring?: boolean;
   recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
+  payCycle?: PayCycle;
 }
 
 export interface Budget {
@@ -31,6 +36,19 @@ export interface Budget {
   limit: number;
   spent: number;
   month: string;
+  periodType?: PayCycle;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface Obligation {
+  id: string;
+  name: string;
+  amount: number;
+  category: CategoryType;
+  dueDate?: string;
+  payCycle: PayCycle;
+  isPaid: boolean;
   createdAt: string;
   updatedAt: string;
 }
@@ -114,10 +132,23 @@ export interface AIInsight {
 
 export interface MonthlyStats {
   month: string;
+  payCycle?: PayCycle;
   totalIncome: number;
   totalExpenses: number;
   savings: number;
+  committed: number;
+  freeAvailable: number;
   byCategory: Record<CategoryType, number>;
+  q1Stats?: {
+    income: number;
+    expenses: number;
+    committed: number;
+  };
+  q2Stats?: {
+    income: number;
+    expenses: number;
+    committed: number;
+  };
 }
 
 export interface ChartDataPoint {
@@ -158,4 +189,5 @@ export interface ExportData {
   incomes: Income[];
   budgets: Budget[];
   goals: SavingsGoal[];
+  obligations: Obligation[];
 }

@@ -32,9 +32,9 @@ export const SpendingAnalysis: React.FC = () => {
         </div>
         <div>
           <h3 className="font-semibold text-surface-900 dark:text-white">
-            Spending Analysis
+            Análisis de Gastos
           </h3>
-          <p className="text-xs text-surface-500">This month overview</p>
+          <p className="text-xs text-surface-500">Resumen del mes</p>
         </div>
       </div>
 
@@ -47,7 +47,7 @@ export const SpendingAnalysis: React.FC = () => {
           )}
           whileHover={{ scale: 1.02 }}
         >
-          <p className="text-xs font-medium text-surface-500 mb-2">Savings Rate</p>
+          <p className="text-xs font-medium text-surface-500 mb-2">Tasa de Ahorro</p>
           <div className="flex items-center gap-2">
             <span
               className={cn(
@@ -79,7 +79,7 @@ export const SpendingAnalysis: React.FC = () => {
           )}
           whileHover={{ scale: 1.02 }}
         >
-          <p className="text-xs font-medium text-surface-500 mb-2">Monthly Savings</p>
+          <p className="text-xs font-medium text-surface-500 mb-2">Ahorro Mensual</p>
           <span
             className={cn(
               'text-2xl font-bold tracking-tight',
@@ -94,7 +94,7 @@ export const SpendingAnalysis: React.FC = () => {
       {topCategories.length > 0 && (
         <div>
           <h4 className="text-sm font-medium text-surface-700 dark:text-surface-300 mb-4">
-            Top Categories
+            Categorías Principales
           </h4>
           <div className="space-y-3">
             {topCategories.map(([categoryId, amount], index) => {

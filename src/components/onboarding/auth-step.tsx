@@ -32,7 +32,7 @@ export const AuthStep: React.FC<{
 
   const handleEmailAuth = async () => {
     if (!email || (mode !== 'forgot' && !password)) {
-      setError('Please fill in all fields');
+      setError('Por favor, completa todos los campos');
       return;
     }
 
@@ -43,7 +43,7 @@ export const AuthStep: React.FC<{
     try {
       if (mode === 'forgot') {
         await auth.resetPassword(email);
-        setSuccessMessage('Password reset email sent! Check your inbox.');
+        setSuccessMessage('¡Correo de recuperación enviado! Revisa tu bandeja de entrada.');
         return;
       }
       
@@ -52,7 +52,7 @@ export const AuthStep: React.FC<{
         onSuccess(email.split('@')[0]);
       } else {
         if (!name) {
-          setError('Please enter your name');
+          setError('Por favor, ingresa tu nombre');
           setIsLoading(false);
           return;
         }
@@ -60,7 +60,7 @@ export const AuthStep: React.FC<{
         onSuccess(name);
       }
     } catch (err: any) {
-      setError(err.message || 'Authentication failed');
+      setError(err.message || 'Error de autenticación');
     } finally {
       setIsLoading(false);
     }
@@ -71,9 +71,10 @@ export const AuthStep: React.FC<{
     setError('');
     try {
       await auth.signInWithGoogle();
-      onSuccess('User');
+      onSuccess('Usuario');
     } catch (err: any) {
-      setError(err.message || 'Google sign-in failed');
+      setError(err.message || 'Error al iniciar sesión con Google');
+      // No llamamos a onSuccess porque falló
     } finally {
       setIsLoading(false);
     }
@@ -84,9 +85,9 @@ export const AuthStep: React.FC<{
     setError('');
     try {
       await auth.signInWithGithub();
-      onSuccess('User');
+      onSuccess('Usuario');
     } catch (err: any) {
-      setError(err.message || 'GitHub sign-in failed');
+      setError(err.message || 'Error al iniciar sesión con GitHub');
     } finally {
       setIsLoading(false);
     }
@@ -112,19 +113,19 @@ export const AuthStep: React.FC<{
           className="flex items-center gap-2 text-sm text-surface-500 hover:text-surface-900 dark:hover:text-white transition-colors"
         >
           <ArrowLeft className="w-4 h-4" />
-          Back to sign in
+          Volver al inicio de sesión
         </button>
 
         <div className="space-y-1">
-          <h3 className="text-xl font-semibold text-surface-900 dark:text-white">Reset password</h3>
-          <p className="text-sm text-surface-500">We'll send you a reset link</p>
+          <h3 className="text-xl font-semibold text-surface-900 dark:text-white">Restablecer contraseña</h3>
+          <p className="text-sm text-surface-500">Te enviaremos un enlace de recuperación</p>
         </div>
 
         <Input
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email address"
+          placeholder="Correo electrónico"
           leftElement={<Mail className="w-4 h-4 text-surface-400" />}
           disabled={isLoading}
           onKeyPress={handleKeyPress}
@@ -143,7 +144,7 @@ export const AuthStep: React.FC<{
           onClick={handleEmailAuth}
           isLoading={isLoading}
         >
-          Send reset link
+          Enviar enlace
         </Button>
       </motion.div>
     );
@@ -167,11 +168,11 @@ export const AuthStep: React.FC<{
             transition={{ duration: 0.15 }}
             className="text-xl font-semibold text-surface-900 dark:text-white"
           >
-            {mode === 'login' ? 'Welcome back' : 'Create account'}
+            {mode === 'login' ? 'Bienvenido de nuevo' : 'Crea una cuenta'}
           </motion.h2>
         </AnimatePresence>
         <p className="text-sm text-surface-500">
-          {mode === 'login' ? 'Sign in to continue' : 'Get started for free'}
+          {mode === 'login' ? 'Inicia sesión para continuar' : 'Comienza gratis'}
         </p>
       </div>
 
@@ -191,7 +192,7 @@ export const AuthStep: React.FC<{
           )}
         >
           <Chrome className="w-4 h-4" />
-          Continue with Google
+          Continuar con Google
         </button>
         <button
           onClick={handleGithubAuth}
@@ -207,14 +208,14 @@ export const AuthStep: React.FC<{
           )}
         >
           <Github className="w-4 h-4" />
-          Continue with GitHub
+          Continuar con GitHub
         </button>
       </div>
 
       {/* Divider */}
       <div className="flex items-center gap-4">
         <div className="flex-1 h-px bg-surface-200 dark:bg-surface-700" />
-        <span className="text-xs text-surface-400">or</span>
+        <span className="text-xs text-surface-400">o</span>
         <div className="flex-1 h-px bg-surface-200 dark:bg-surface-700" />
       </div>
 
@@ -231,7 +232,7 @@ export const AuthStep: React.FC<{
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                placeholder="Your name"
+                placeholder="Tu nombre"
                 leftElement={<User className="w-4 h-4 text-surface-400" />}
                 disabled={isLoading}
               />
@@ -243,7 +244,7 @@ export const AuthStep: React.FC<{
           type="email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="Email address"
+          placeholder="Correo electrónico"
           leftElement={<Mail className="w-4 h-4 text-surface-400" />}
           disabled={isLoading}
         />
@@ -252,7 +253,7 @@ export const AuthStep: React.FC<{
           type={showPassword ? 'text' : 'password'}
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Contraseña"
           leftElement={<Lock className="w-4 h-4 text-surface-400" />}
           disabled={isLoading}
           rightElement={
@@ -274,7 +275,7 @@ export const AuthStep: React.FC<{
             className="text-sm text-blue-500 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
             disabled={isLoading}
           >
-            Forgot password?
+            ¿Olvidaste tu contraseña?
           </button>
         </div>
       )}
@@ -288,11 +289,11 @@ export const AuthStep: React.FC<{
         onClick={handleEmailAuth}
         isLoading={isLoading}
       >
-        {mode === 'login' ? 'Sign in' : 'Create account'}
+        {mode === 'login' ? 'Iniciar sesión' : 'Crear cuenta'}
       </Button>
 
       <p className="text-center text-sm text-surface-500">
-        {mode === 'login' ? "Don't have an account? " : 'Already have an account? '}
+        {mode === 'login' ? '¿No tienes una cuenta? ' : '¿Ya tienes una cuenta? '}
         <button
           onClick={() => {
             setMode(mode === 'login' ? 'signup' : 'login');
@@ -301,7 +302,7 @@ export const AuthStep: React.FC<{
           className="text-blue-500 font-medium hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           disabled={isLoading}
         >
-          {mode === 'login' ? 'Sign up' : 'Sign in'}
+          {mode === 'login' ? 'Regístrate' : 'Iniciar sesión'}
         </button>
       </p>
     </motion.div>

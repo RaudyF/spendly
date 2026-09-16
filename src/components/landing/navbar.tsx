@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { motion } from 'framer-motion';
+import { Logo } from '@/components/ui/logo';
 
 interface NavbarProps {
   onGetStarted: () => void;
@@ -18,22 +19,15 @@ export function Navbar({ onGetStarted }: NavbarProps) {
       <div className="mx-auto max-w-6xl px-6 py-4">
         <div className="flex items-center justify-between rounded-2xl bg-white/70 dark:bg-surface-900/70 backdrop-blur-xl px-6 py-3 shadow-soft border border-surface-200/50 dark:border-surface-800/50">
           <div className="flex items-center gap-2">
-            <img 
-              src="/images/logo.svg" 
-              alt="Spendly" 
-              className="w-8 h-8 rounded-xl"
-            />
-            <span className="font-semibold text-surface-900 dark:text-white tracking-tight">
-              Spendly
-            </span>
+            <Logo className="scale-90 origin-left" />
           </div>
 
           <div className="hidden md:flex items-center gap-8">
             <a href="#features" className="text-sm text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors">
-              Features
+              Características
             </a>
             <a href="#how-it-works" className="text-sm text-surface-600 dark:text-surface-400 hover:text-surface-900 dark:hover:text-white transition-colors">
-              How it works
+              Cómo funciona
             </a>
           </div>
 
@@ -41,7 +35,7 @@ export function Navbar({ onGetStarted }: NavbarProps) {
             onClick={onGetStarted}
             className="px-4 py-2 text-sm font-medium text-white bg-surface-900 dark:bg-white dark:text-surface-900 rounded-xl hover:bg-surface-800 dark:hover:bg-surface-100 transition-colors"
           >
-            Get Started
+            Comenzar
           </button>
         </div>
       </div>

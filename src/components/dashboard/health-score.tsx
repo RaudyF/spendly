@@ -19,22 +19,22 @@ export const HealthScore: React.FC = () => {
 
   const statusConfig = {
     excellent: {
-      label: 'Excellent',
+      label: 'Excelente',
       color: 'text-success-600 dark:text-success-400',
       bg: 'bg-success-50 dark:bg-success-900/20',
     },
     good: {
-      label: 'Good',
+      label: 'Buena',
       color: 'text-secondary-600 dark:text-secondary-400',
       bg: 'bg-secondary-50 dark:bg-secondary-900/20',
     },
     fair: {
-      label: 'Fair',
+      label: 'Regular',
       color: 'text-accent-600 dark:text-accent-400',
       bg: 'bg-accent-50 dark:bg-accent-900/20',
     },
     poor: {
-      label: 'Needs Work',
+      label: 'Alerta',
       color: 'text-danger-600 dark:text-danger-400',
       bg: 'bg-danger-50 dark:bg-danger-900/20',
     },
@@ -47,7 +47,7 @@ export const HealthScore: React.FC = () => {
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
-            Financial Health
+            Salud Financiera
           </h3>
           <Badge className={cn(config.color, config.bg, 'text-xs')}>
             {config.label}
@@ -94,7 +94,7 @@ export const HealthScore: React.FC = () => {
 
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm text-surface-500 mb-3 sm:mb-4 leading-relaxed">
-              Based on your savings rate, budget adherence, and goal progress.
+              Basado en tus ingresos, gastos y metas.
             </p>
             <Link
               href="/insights"
@@ -106,7 +106,7 @@ export const HealthScore: React.FC = () => {
               )}
             >
               <Sparkles className="w-4 h-4" />
-              Get AI Insights
+              Obtener Análisis
               <ChevronRight className="w-4 h-4" />
             </Link>
           </div>

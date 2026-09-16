@@ -2,6 +2,7 @@ import {
   LayoutDashboard,
   Receipt,
   Wallet,
+  CalendarCheck,
   Target,
   Sparkles,
   Settings,
@@ -9,10 +10,11 @@ import {
 
 // Navigation items
 export const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/expenses', label: 'Expenses', icon: Receipt },
-  { href: '/budget', label: 'Budget', icon: Wallet },
-  { href: '/goals', label: 'Goals', icon: Target },
-  { href: '/insights', label: 'Insights', icon: Sparkles },
-  { href: '/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard', label: 'Resumen', icon: LayoutDashboard },
+  { href: '/expenses', label: 'Movimientos', icon: Receipt },
+  { href: '/budget', label: 'Presupuesto', icon: Wallet },
+  { href: '/obligations', label: 'Obligaciones', icon: CalendarCheck },
+  { href: '/goals', label: 'Metas', icon: Target },
+  { href: '/insights', label: 'Análisis', icon: Sparkles },
+  { href: '/settings', label: 'Ajustes', icon: Settings },
 ];

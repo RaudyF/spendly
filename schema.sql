@@ -9,6 +9,21 @@ CREATE TABLE IF NOT EXISTS users (
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
+-- Incomes table
+CREATE TABLE IF NOT EXISTS incomes (
+  id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  amount DECIMAL(10, 2) NOT NULL,
+  source TEXT NOT NULL,
+  date DATE NOT NULL,
+  pay_cycle TEXT,
+  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_incomes_user_id ON incomes(user_id);
+CREATE INDEX IF NOT EXISTS idx_incomes_date ON incomes(date);
+
 -- Expenses table
 CREATE TABLE IF NOT EXISTS expenses (
   id TEXT PRIMARY KEY,
@@ -17,6 +32,7 @@ CREATE TABLE IF NOT EXISTS expenses (
   category TEXT NOT NULL,
   description TEXT,
   date DATE NOT NULL,
+  pay_cycle TEXT,
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
@@ -30,6 +46,7 @@ CREATE TABLE IF NOT EXISTS budgets (
   category TEXT NOT NULL,
   amount DECIMAL(10, 2) NOT NULL,
   period TEXT NOT NULL DEFAULT 'monthly',
+  period_type TEXT DEFAULT 'MONTHLY',
   created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
   updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );

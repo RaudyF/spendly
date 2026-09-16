@@ -21,32 +21,32 @@ export interface OnboardingStep {
 export const steps: OnboardingStep[] = [
   {
     id: 1,
-    title: 'Welcome to Spendly',
-    description: 'Your personal finance companion. Track expenses, set budgets, and get AI-powered insights.',
+    title: 'Bienvenido a SaldoClaro',
+    description: 'Tu asistente personal de finanzas. Controla tus gastos y organiza tus quincenas de forma inteligente.',
     icon: Wallet,
   },
   {
     id: 2,
-    title: 'Create your account',
-    description: 'Sign in to sync your data across devices.',
+    title: 'Crea tu cuenta',
+    description: 'Inicia sesión para sincronizar tu información en todos tus dispositivos.',
     icon: User,
   },
   {
     id: 3,
-    title: 'Set your monthly income',
-    description: 'This helps us create a smart budget for you.',
+    title: '¿Cuál es tu ingreso base?',
+    description: 'Usaremos esta información para calcular tus quincenas y obligaciones.',
     icon: DollarSign,
   },
   {
     id: 4,
-    title: 'Choose your currency',
-    description: 'Select the currency you want to use.',
+    title: 'Elige tu moneda',
+    description: 'Selecciona la moneda que deseas utilizar.',
     icon: Target,
   },
   {
     id: 5,
-    title: 'You are all set',
-    description: 'Start tracking your expenses and reach your financial goals.',
+    title: '¡Todo listo!',
+    description: 'Comienza a organizar tus quincenas y alcanza tus metas financieras.',
     icon: Sparkles,
   },
 ];

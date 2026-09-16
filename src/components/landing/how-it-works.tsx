@@ -8,18 +8,18 @@ import Image from 'next/image';
 const steps = [
   {
     number: '1',
-    title: 'Create Account',
-    description: 'Sign up in seconds with your email or social accounts. No credit card required.',
+    title: 'Crea tu cuenta',
+    description: 'Regístrate gratis con Google en unos segundos para empezar a usar la aplicación.',
   },
   {
     number: '2',
-    title: 'Set Budget',
-    description: 'Define spending limits for different categories based on your income and goals.',
+    title: 'Define tus Quincenas',
+    description: 'Ajusta tu ingreso, define tus quincenas (Q1/Q2) y asigna tus obligaciones a cada período.',
   },
   {
     number: '3',
-    title: 'Track & Save',
-    description: 'Log expenses, monitor your progress, and watch your savings grow over time.',
+    title: 'Controla tu Dinero Libre',
+    description: 'Conoce siempre el "Disponible Libre", tu dinero real después de apartar las obligaciones.',
   },
 ];
 
@@ -35,7 +35,7 @@ export function HowItWorks() {
             viewport={{ once: true }}
             className="text-3xl md:text-4xl font-bold text-white tracking-tight font-display"
           >
-            How it works
+            Cómo funciona
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -44,7 +44,7 @@ export function HowItWorks() {
             transition={{ delay: 0.1 }}
             className="mt-4 text-lg text-surface-400"
           >
-            Get started in three simple steps
+            Comienza a organizarte en tres simples pasos
           </motion.p>
         </div>
 
@@ -84,7 +84,7 @@ export function HowItWorks() {
                 
                 {/* See More Link */}
                 <button className="inline-flex items-center gap-1 text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors group">
-                  See More
+                  Saber más
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>
@@ -148,7 +148,7 @@ export function HowItWorks() {
                 
                 {/* See More Link */}
                 <button className="inline-flex items-center gap-1 text-primary-400 hover:text-primary-300 text-sm font-medium transition-colors group">
-                  See More
+                  Saber más
                   <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
                 </button>
               </motion.div>

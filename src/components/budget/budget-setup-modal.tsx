@@ -30,40 +30,40 @@ export const BudgetSetupModal: React.FC<BudgetSetupProps> = ({ isOpen, onClose }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Set Up Your Budget" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Configurar Presupuesto" size="md">
       <div className="space-y-6">
         <p className="text-neutral-500">
-          We'll create a smart budget based on your monthly income using the 50/30/20 rule.
+          Configuraremos un presupuesto sugerido basado en tus ingresos usando la regla 50/30/20.
         </p>
 
         <Input
           type="number"
-          label="Monthly Income"
+          label="Ingreso Mensual"
           value={income}
           onChange={(e) => setIncome(e.target.value)}
-          placeholder="Enter your monthly income"
+          placeholder="Ingresa tu ingreso mensual"
           leftElement={<span className="text-lg">$</span>}
         />
 
         <div className="bg-neutral-50 dark:bg-neutral-800 rounded-xl p-4">
           <h4 className="font-medium text-neutral-900 dark:text-white mb-3">
-            Budget Breakdown
+            Desglose Sugerido
           </h4>
           <div className="space-y-2 text-sm">
             <div className="flex justify-between">
-              <span className="text-neutral-500">Needs (50%)</span>
+              <span className="text-neutral-500">Necesidades (50%)</span>
               <span className="font-medium">
                 {formatCurrency(parseFloat(income || '0') * 0.5)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-500">Wants (30%)</span>
+              <span className="text-neutral-500">Deseos (30%)</span>
               <span className="font-medium">
                 {formatCurrency(parseFloat(income || '0') * 0.3)}
               </span>
             </div>
             <div className="flex justify-between">
-              <span className="text-neutral-500">Savings (20%)</span>
+              <span className="text-neutral-500">Ahorros (20%)</span>
               <span className="font-medium">
                 {formatCurrency(parseFloat(income || '0') * 0.2)}
               </span>
@@ -77,7 +77,7 @@ export const BudgetSetupModal: React.FC<BudgetSetupProps> = ({ isOpen, onClose }
           isLoading={isSubmitting}
           disabled={!income}
         >
-          Create Budget
+          Crear Presupuesto
         </Button>
       </div>
     </Modal>

@@ -5,6 +5,7 @@ import {
   expensesDB,
   incomesDB,
   budgetsDB,
+  obligationsDB,
   goalsDB,
   profileDB,
   insightsDB,
@@ -15,6 +16,7 @@ import {
   createExpenseActions,
   createIncomeActions,
   createBudgetActions,
+  createObligationActions,
   createGoalActions,
   createProfileActions,
   createSyncActions,
@@ -30,12 +32,14 @@ export const useStore = create<AppState>()(
       expenses: [],
       incomes: [],
       budgets: [],
+      obligations: [],
       goals: [],
       insights: [],
       profile: null,
       isLoading: true,
       isOnboarded: false,
       currentMonth: getCurrentMonth(),
+      activePayCycle: 'MONTHLY',
       theme: 'dark',
       monthlyStats: null,
       financialHealth: null,
@@ -53,11 +57,12 @@ export const useStore = create<AppState>()(
         try {
           await db.init(userId);
 
-          const [expenses, incomes, budgets, goals, insights, profile] =
+          const [expenses, incomes, budgets, obligations, goals, insights, profile] =
             await Promise.all([
               expensesDB.getAll(),
               incomesDB.getAll(),
               budgetsDB.getAll(),
+              obligationsDB.getAll(),
               goalsDB.getAll(),
               insightsDB.getAll(),
               profileDB.get(),
@@ -69,6 +74,7 @@ export const useStore = create<AppState>()(
             expenses,
             incomes,
             budgets,
+            obligations,
             goals,
             insights,
             profile: profile || null,
@@ -90,6 +96,7 @@ export const useStore = create<AppState>()(
       ...createExpenseActions(set, get),
       ...createIncomeActions(set, get),
       ...createBudgetActions(set, get),
+      ...createObligationActions(set, get),
       ...createGoalActions(set, get),
       ...createProfileActions(set, get),
       ...createSyncActions(set, get),
@@ -102,6 +109,7 @@ export const useStore = create<AppState>()(
             expensesDB.clear(),
             incomesDB.clear(),
             budgetsDB.clear(),
+            obligationsDB.clear(),
             goalsDB.clear(),
             insightsDB.clear(),
             profileDB.clear(),
@@ -114,6 +122,7 @@ export const useStore = create<AppState>()(
           expenses: [],
           incomes: [],
           budgets: [],
+          obligations: [],
           goals: [],
           insights: [],
           profile: null,
@@ -125,7 +134,7 @@ export const useStore = create<AppState>()(
     }),
     {
       name: 'spendly-storage',
-      storage: createJSONStorage(() => localStorage),
+      storage: createJSONStorage(() => (typeof window !== "undefined" ? localStorage : { getItem: () => null, setItem: () => {}, removeItem: () => {} })),
       partialize: (state) => ({
         theme: state.theme,
         currentMonth: state.currentMonth,

@@ -100,14 +100,14 @@ export const ExpensesPage: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-danger-500 flex items-center justify-center shadow-soft-sm">
               <TrendingDown className="w-5 h-5 text-white" />
             </div>
-            Expenses
+            Movimientos
           </h1>
           <p className="text-surface-500 mt-1">
-            Total: {formatCurrency(totalFiltered, profile?.currency || 'USD')} from {filteredExpenses.length} transactions
+            Total: {formatCurrency(totalFiltered, profile?.currency || 'USD')} en {filteredExpenses.length} movimientos
           </p>
         </div>
         <Button leftIcon={<Plus className="w-5 h-5" />} onClick={() => setShowForm(true)}>
-          Add Expense
+          Añadir Movimiento
         </Button>
       </div>
 
@@ -115,7 +115,7 @@ export const ExpensesPage: React.FC = () => {
       <div className="flex gap-3 mb-6">
         <div className="flex-1">
           <Input
-            placeholder="Search expenses..."
+            placeholder="Buscar movimientos..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             leftElement={<Search className="w-5 h-5 text-surface-400" />}
@@ -148,15 +148,15 @@ export const ExpensesPage: React.FC = () => {
         <Card className="py-12">
           <EmptyState
             icon={<Receipt className="w-12 h-12" />}
-            title="No expenses found"
+            title="No se encontraron movimientos"
             description={
               searchQuery
-                ? 'Try a different search term'
-                : 'Start tracking your spending by adding your first expense'
+                ? 'Intenta ajustar los filtros para ver más resultados.'
+                : 'Registra tus movimientos para comenzar.'
             }
             action={
               !searchQuery
-                ? <Button onClick={() => setShowForm(true)}>Add Expense</Button>
+                ? <Button onClick={() => setShowForm(true)}>Añadir Movimiento</Button>
                 : undefined
             }
           />
@@ -197,7 +197,7 @@ export const ExpensesPage: React.FC = () => {
           setShowForm(false);
           setEditingExpense(undefined);
         }}
-        title={editingExpense ? 'Edit Expense' : 'Add Expense'}
+        title={editingExpense ? 'Actualizar Movimiento' : 'Añadir Movimiento'}
       >
         <ExpenseForm
           expense={editingExpense}
@@ -212,7 +212,7 @@ export const ExpensesPage: React.FC = () => {
       <Sheet
         isOpen={showFilters}
         onClose={() => setShowFilters(false)}
-        title="Filter Expenses"
+        title="Filtrar Movimientos"
       >
         <FilterDropdown
           filters={filters}
@@ -226,9 +226,9 @@ export const ExpensesPage: React.FC = () => {
         isOpen={!!deleteId}
         onClose={() => setDeleteId(null)}
         onConfirm={handleDelete}
-        title="Delete Expense?"
-        description="This action cannot be undone."
-        confirmText="Delete"
+        title="¿Eliminar movimiento?"
+        description="Esta acción no se puede deshacer."
+        confirmText="Eliminar"
         variant="danger"
       />
     </div>

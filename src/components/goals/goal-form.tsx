@@ -55,17 +55,17 @@ export const GoalForm: React.FC<GoalFormProps> = ({ goal, onClose }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <Input
-        label="Goal Name"
+        label="Nombre de la Meta"
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="e.g., Emergency Fund, New Car, Vacation"
+        placeholder="ej., Fondo de Emergencia, Vacaciones"
         required
       />
 
       <div className="grid grid-cols-2 gap-4">
         <Input
           type="number"
-          label="Target Amount"
+          label="Monto Objetivo"
           value={targetAmount}
           onChange={(e) => setTargetAmount(e.target.value)}
           placeholder="0.00"
@@ -74,7 +74,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({ goal, onClose }) => {
         />
         <Input
           type="number"
-          label="Current Saved"
+          label="Ahorro Actual"
           value={currentAmount}
           onChange={(e) => setCurrentAmount(e.target.value)}
           placeholder="0.00"
@@ -84,7 +84,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({ goal, onClose }) => {
 
       <Input
         type="date"
-        label="Target Date (optional)"
+        label="Fecha Límite (opcional)"
         value={deadline}
         onChange={(e) => setDeadline(e.target.value)}
       />
@@ -92,7 +92,7 @@ export const GoalForm: React.FC<GoalFormProps> = ({ goal, onClose }) => {
       {/* Icon Selection */}
       <div>
         <label className="block text-sm font-medium text-neutral-700 dark:text-neutral-300 mb-2">
-          Icon
+          Ícono
         </label>
         <div className="flex flex-wrap gap-2">
           {GOAL_ICONS.map((icon) => (
@@ -136,10 +136,10 @@ export const GoalForm: React.FC<GoalFormProps> = ({ goal, onClose }) => {
 
       <div className="flex gap-3 pt-4">
         <Button type="button" variant="ghost" onClick={onClose} className="flex-1">
-          Cancel
+          Cancelar
         </Button>
         <Button type="submit" className="flex-1" isLoading={isSubmitting}>
-          {goal ? 'Update' : 'Create'} Goal
+          {goal ? 'Actualizar' : 'Crear'} Meta
         </Button>
       </div>
     </form>
@@ -176,7 +176,7 @@ export const AddFundsModal: React.FC<AddFundsProps> = ({ goal, onClose }) => {
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       <div className="text-center p-4 bg-neutral-50 dark:bg-neutral-800 rounded-2xl">
-        <p className="text-sm text-neutral-500 mb-1">Remaining to reach goal</p>
+        <p className="text-sm text-neutral-500 mb-1">Restante para la meta</p>
         <p className="text-2xl font-bold text-neutral-900 dark:text-white">
           {formatCurrency(remaining)}
         </p>
@@ -184,7 +184,7 @@ export const AddFundsModal: React.FC<AddFundsProps> = ({ goal, onClose }) => {
 
       <Input
         type="number"
-        label="Amount to Add"
+        label="Monto a Aportar"
         value={amount}
         onChange={(e) => setAmount(e.target.value)}
         placeholder="0.00"
@@ -205,13 +205,13 @@ export const AddFundsModal: React.FC<AddFundsProps> = ({ goal, onClose }) => {
                 : 'bg-neutral-100 text-neutral-600 dark:bg-neutral-800'
             )}
           >
-            {value === remaining ? 'Complete Goal' : formatCurrency(value)}
+            {value === remaining ? 'Completar Meta' : formatCurrency(value)}
           </button>
         ))}
       </div>
 
       <Button type="submit" className="w-full" isLoading={isSubmitting}>
-        Add Funds
+        Aportar Fondos
       </Button>
     </form>
   );

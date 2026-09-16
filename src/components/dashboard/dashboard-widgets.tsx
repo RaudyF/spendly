@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useStore } from '@/store';
 import { Card, Progress, Button, EmptyState } from '@/components/ui';
 import { CategoryIcon } from '@/components/category-icon';
-import { cn, formatCurrency, formatDate, calculatePercentage } from '@/lib/utils';
+import { cn, formatCurrency, formatDate, calculatePercentage, getPayCycleFromDate } from '@/lib/utils';
 import { CATEGORIES } from '@/lib/constants';
 import { itemVariants } from './stats-card';
 
@@ -15,8 +15,16 @@ import { itemVariants } from './stats-card';
 export const RecentTransactions: React.FC = () => {
   const expenses = useStore((state) => state.expenses);
   const profile = useStore((state) => state.profile);
+  const currentMonth = useStore((state) => state.currentMonth);
+  const activePayCycle = useStore((state) => state.activePayCycle);
 
-  const recentExpenses = [...expenses]
+  const filteredExpenses = expenses.filter((e) => {
+    if (!e.date.startsWith(currentMonth)) return false;
+    if (activePayCycle === 'MONTHLY') return true;
+    return getPayCycleFromDate(e.date) === activePayCycle;
+  });
+
+  const recentExpenses = [...filteredExpenses]
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
     .slice(0, 5);
 
@@ -25,7 +33,7 @@ export const RecentTransactions: React.FC = () => {
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
-            Recent Transactions
+            Movimientos Recientes
           </h3>
           <Link
             href="/expenses"
@@ -36,18 +44,18 @@ export const RecentTransactions: React.FC = () => {
               'transition-colors duration-200'
             )}
           >
-            View all
+            Ver todos
           </Link>
         </div>
 
         {recentExpenses.length === 0 ? (
           <EmptyState
             icon={<Receipt className="w-12 h-12" />}
-            title="No transactions"
-            description="Start tracking your expenses"
+            title="Sin movimientos"
+            description="Registra tus movimientos"
             action={
               <Button onClick={() => window.location.href = '/expenses'}>
-                Add Expense
+                Añadir Movimiento
               </Button>
             }
           />
@@ -102,7 +110,7 @@ export const BudgetOverview: React.FC = () => {
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
-            Budget Overview
+            Estado de Presupuesto
           </h3>
           <Link
             href="/budget"
@@ -113,18 +121,18 @@ export const BudgetOverview: React.FC = () => {
               'transition-colors duration-200'
             )}
           >
-            Manage
+            Administrar
           </Link>
         </div>
 
         {monthBudgets.length === 0 ? (
           <EmptyState
             icon={<Wallet className="w-12 h-12" />}
-            title="No budgets set"
-            description="Create budgets to track spending"
+            title="Sin presupuestos"
+            description="Crea presupuestos para monitorear gastos"
             action={
               <Button onClick={() => window.location.href = '/budget'}>
-                Set Up Budget
+                Añadir Presupuesto
               </Button>
             }
           />
@@ -162,6 +170,86 @@ export const BudgetOverview: React.FC = () => {
                     size="sm"
                     color={isOverBudget ? 'danger' : percentage > 80 ? 'warning' : 'primary'}
                   />
+                </motion.div>
+              );
+            })}
+          </div>
+        )}
+      </Card>
+    </motion.div>
+  );
+};
+
+export const ObligationsOverview: React.FC = () => {
+  const obligations = useStore((state) => state.obligations);
+  const activePayCycle = useStore((state) => state.activePayCycle);
+  const profile = useStore((state) => state.profile);
+
+  const activeObligations = obligations
+    .filter((o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle)
+    .sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime())
+    .slice(0, 4);
+
+  return (
+    <motion.div variants={itemVariants}>
+      <Card className="h-full">
+        <div className="flex items-center justify-between mb-4 sm:mb-5">
+          <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
+            Obligaciones
+          </h3>
+          <Link
+            href="/obligations"
+            className={cn(
+              'text-xs sm:text-sm font-medium',
+              'text-primary-600 dark:text-primary-400',
+              'hover:text-primary-700 dark:hover:text-primary-300',
+              'transition-colors duration-200'
+            )}
+          >
+            Administrar
+          </Link>
+        </div>
+
+        {activeObligations.length === 0 ? (
+          <EmptyState
+            icon={<Wallet className="w-12 h-12" />}
+            title="Sin obligaciones"
+            description="Agrega obligaciones para esta quincena"
+            action={
+              <Button onClick={() => window.location.href = '/obligations'}>
+                Añadir
+              </Button>
+            }
+          />
+        ) : (
+          <div className="space-y-4">
+            {activeObligations.map((obligation, index) => {
+              const category = CATEGORIES.find((c) => c.id === obligation.category);
+              return (
+                <motion.div 
+                  key={obligation.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: index * 0.08 }}
+                  className="flex items-center justify-between p-3 rounded-xl bg-surface-50 dark:bg-surface-800/50 border border-surface-100 dark:border-surface-800"
+                >
+                  <div className="flex items-center gap-3">
+                    <CategoryIcon category={obligation.category} size="sm" />
+                    <div>
+                      <p className="text-sm font-medium text-surface-900 dark:text-white">
+                        {obligation.name}
+                      </p>
+                      <p className="text-xs text-surface-500">
+                        {obligation.isPaid ? 'Pagado' : 'Pendiente'}
+                      </p>
+                    </div>
+                  </div>
+                  <span className={cn(
+                    'text-sm font-semibold',
+                    obligation.isPaid ? 'text-surface-500 line-through' : 'text-danger-600 dark:text-danger-400'
+                  )}>
+                    {formatCurrency(obligation.amount, profile?.currency)}
+                  </span>
                 </motion.div>
               );
             })}

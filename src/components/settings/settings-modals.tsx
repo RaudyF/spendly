@@ -23,7 +23,7 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
   onSelect,
 }) => {
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Select Currency" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Seleccionar Moneda" size="sm">
       <div className="space-y-2 max-h-[400px] overflow-y-auto">
         {CURRENCIES.map((currency) => (
           <button
@@ -87,25 +87,25 @@ export const EditProfileModal: React.FC<EditProfileProps> = ({ isOpen, onClose }
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Edit Profile" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Editar Perfil" size="md">
       <form onSubmit={handleSubmit} className="space-y-5">
         <Input
-          label="Name"
+          label="Nombre"
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Your name"
+          placeholder="Tu nombre"
         />
         <Input
           type="email"
           label="Email"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          placeholder="your@email.com"
-          hint="Used for account recovery"
+          placeholder="tu@email.com"
+          hint="Usado para recuperar cuenta"
         />
         <Input
           type="number"
-          label="Monthly Income"
+          label="Ingreso Mensual"
           value={monthlyIncome}
           onChange={(e) => setMonthlyIncome(e.target.value)}
           placeholder="0.00"
@@ -113,10 +113,10 @@ export const EditProfileModal: React.FC<EditProfileProps> = ({ isOpen, onClose }
         />
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="ghost" onClick={onClose} className="flex-1">
-            Cancel
+            Cancelar
           </Button>
           <Button type="submit" className="flex-1" isLoading={isSubmitting}>
-            Save Changes
+            Guardar Cambios
           </Button>
         </div>
       </form>
@@ -142,18 +142,18 @@ export const APIKeysModal: React.FC<APIKeysModalProps> = ({ isOpen, onClose }) =
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="API Configuration" size="md">
+    <Modal isOpen={isOpen} onClose={onClose} title="Configuración de API" size="md">
       <div className="space-y-5">
         <div>
           <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-            Google AI (Gemini) API Key
+            Clave API de Google AI (Gemini)
           </label>
           <div className="relative">
             <Input
               type={showKey ? 'text' : 'password'}
               value={geminiKey}
               onChange={(e) => setGeminiKey(e.target.value)}
-              placeholder="Enter your Gemini API key"
+              placeholder="Ingresa tu clave API de Gemini"
               rightElement={
                 <button
                   type="button"
@@ -166,7 +166,7 @@ export const APIKeysModal: React.FC<APIKeysModalProps> = ({ isOpen, onClose }) =
             />
           </div>
           <p className="text-sm text-surface-500 mt-2">
-            Get your free API key from{' '}
+            Obtén tu clave API gratuita en{' '}
             <a
               href="https://makersuite.google.com/app/apikey"
               target="_blank"
@@ -185,10 +185,10 @@ export const APIKeysModal: React.FC<APIKeysModalProps> = ({ isOpen, onClose }) =
             <Shield className="w-5 h-5 text-accent-500 mt-0.5" />
             <div>
               <p className="text-sm font-medium text-surface-900 dark:text-white">
-                Your keys are stored locally
+                Tus claves se guardan localmente
               </p>
               <p className="text-sm text-surface-500 mt-1">
-                API keys are saved in your browser and never sent to our servers.
+                Las claves API se guardan en tu navegador y nunca se envían a nuestros servidores.
               </p>
             </div>
           </div>
@@ -196,10 +196,10 @@ export const APIKeysModal: React.FC<APIKeysModalProps> = ({ isOpen, onClose }) =
 
         <div className="flex gap-3">
           <Button type="button" variant="ghost" onClick={onClose} className="flex-1">
-            Cancel
+            Cancelar
           </Button>
           <Button onClick={handleSave} className="flex-1">
-            Save Keys
+            Guardar Claves
           </Button>
         </div>
       </div>
@@ -218,6 +218,7 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
   const incomes = useStore((state) => state.incomes);
   const budgets = useStore((state) => state.budgets);
   const goals = useStore((state) => state.goals);
+  const obligations = useStore((state) => state.obligations);
   const profile = useStore((state) => state.profile);
 
   const handleExportCSV = () => {
@@ -228,7 +229,7 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
       category: e.category,
       amount: -e.amount,
     }));
-    exportToCSV(data, `spendly-expenses-${new Date().toISOString().split('T')[0]}`);
+    exportToCSV(data, `movimientos-${new Date().toISOString().split('T')[0]}`);
   };
 
   const handleExportJSON = () => {
@@ -240,19 +241,20 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
       incomes,
       budgets,
       goals,
+      obligations,
     };
     
     const blob = new Blob([JSON.stringify(exportData, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `spendly-backup-${new Date().toISOString().split('T')[0]}.json`;
+    a.download = `control-financiero-backup-${new Date().toISOString().split('T')[0]}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
 
   return (
-    <Modal isOpen={isOpen} onClose={onClose} title="Export Data" size="sm">
+    <Modal isOpen={isOpen} onClose={onClose} title="Exportar Datos" size="sm">
       <div className="space-y-4">
         <button
           onClick={handleExportCSV}
@@ -262,8 +264,8 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
             <FileJson className="w-6 h-6 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div className="text-left">
-            <p className="font-medium text-surface-900 dark:text-white">Export as CSV</p>
-            <p className="text-sm text-surface-500">Spreadsheet-compatible format</p>
+            <p className="font-medium text-surface-900 dark:text-white">Exportar como CSV</p>
+            <p className="text-sm text-surface-500">Formato compatible con hojas de cálculo</p>
           </div>
         </button>
 
@@ -275,15 +277,15 @@ export const DataExportModal: React.FC<DataExportModalProps> = ({ isOpen, onClos
             <Database className="w-6 h-6 text-blue-600 dark:text-blue-400" />
           </div>
           <div className="text-left">
-            <p className="font-medium text-surface-900 dark:text-white">Full Backup (JSON)</p>
-            <p className="text-sm text-surface-500">Complete data with all settings</p>
+            <p className="font-medium text-surface-900 dark:text-white">Copia de Seguridad (JSON)</p>
+            <p className="text-sm text-surface-500">Datos completos con todas las configuraciones</p>
           </div>
         </button>
 
         <Divider />
 
         <p className="text-xs text-surface-400 text-center">
-          {expenses.length} expenses, {incomes.length} incomes, {goals.length} goals
+          {expenses.length} movimientos, {incomes.length} ingresos, {goals.length} metas
         </p>
       </div>
     </Modal>

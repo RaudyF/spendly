@@ -21,7 +21,7 @@ export const FloatingChat: React.FC = () => {
     {
       id: '1',
       role: 'assistant',
-      content: "Hi! I'm your Spendly assistant. How can I help you with your finances today?",
+      content: "Hi! I'm your SaldoClaro assistant. How can I help you with your finances today?",
       timestamp: new Date().toISOString(),
     },
   ]);
@@ -223,7 +223,7 @@ export const FloatingChat: React.FC = () => {
                   <Sparkles className="w-5 h-5 text-white" />
                 </div>
                 <div>
-                  <h3 className="font-semibold text-white">Spendly Assistant</h3>
+                  <h3 className="font-semibold text-white">SaldoClaro Assistant</h3>
                   <p className="text-xs text-white/70">Here to help with your finances</p>
                 </div>
               </div>

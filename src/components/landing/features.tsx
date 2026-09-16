@@ -8,38 +8,38 @@ import { cn } from '@/lib/utils';
 const features = [
   {
     icon: PieChart,
-    title: 'Smart Tracking',
-    description: 'Automatically categorize and track your spending with intelligent insights.',
+    title: 'Quincenas',
+    description: 'Gestiona tu dinero de forma natural. Divide tus ingresos y obligaciones por quincenas reales (Q1 y Q2).',
     color: 'primary',
   },
   {
     icon: Target,
-    title: 'Goal Setting',
-    description: 'Set savings goals and track your progress with visual milestones.',
+    title: 'Disponible Libre',
+    description: 'Conoce con exactitud cuánto dinero te sobra después de cubrir tus obligaciones reales y comprometidas.',
     color: 'secondary',
   },
   {
     icon: Sparkles,
-    title: 'AI Insights',
-    description: 'Get personalized recommendations powered by AI to optimize your budget.',
+    title: 'Obligaciones',
+    description: 'Registra tus pagos recurrentes y asígnalos a la quincena correcta para no olvidar nada.',
     color: 'accent',
   },
   {
     icon: Shield,
-    title: 'Secure & Private',
-    description: 'Your financial data is encrypted and never shared with third parties.',
+    title: 'Seguro y Privado',
+    description: 'Tus datos financieros están cifrados, seguros y vinculados solo a tu cuenta de Google.',
     color: 'primary',
   },
   {
     icon: Zap,
-    title: 'Real-time Sync',
-    description: 'Access your budget anywhere with instant sync across all devices.',
+    title: 'Pronóstico Financiero',
+    description: 'Visualiza qué pasará en tu próxima quincena antes de que llegue y planifica con anticipación.',
     color: 'secondary',
   },
   {
     icon: TrendingUp,
-    title: 'Trend Analysis',
-    description: 'Understand your spending patterns with detailed charts and reports.',
+    title: 'Análisis de Gastos',
+    description: 'Entiende tus patrones de consumo con reportes y gráficas simples de leer.',
     color: 'accent',
   },
 ];
@@ -55,7 +55,7 @@ export function Features() {
             viewport={{ once: true }}
             className="text-3xl md:text-4xl font-bold text-surface-900 dark:text-white tracking-tight font-display"
           >
-            Everything you need to manage your finances
+            Todo lo que necesitas para tu control financiero
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -64,7 +64,7 @@ export function Features() {
             transition={{ delay: 0.1 }}
             className="mt-4 text-lg text-surface-600 dark:text-surface-400"
           >
-            Powerful features designed to help you take control of your money.
+            Herramientas diseñadas para darte paz mental y visibilidad total sobre tu dinero.
           </motion.p>
         </div>
 

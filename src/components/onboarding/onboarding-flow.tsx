@@ -38,8 +38,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [name, setName] = useState('');
   const [income, setIncome] = useState('');
-  const [currency, setCurrency] = useState('USD');
+  const [currency, setCurrency] = useState('DOP');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [hasAutoSkipped, setHasAutoSkipped] = useState(false);
 
   // Handle user authentication and returning user detection
   useEffect(() => {
@@ -59,7 +60,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
       
       // User is authenticated but needs to complete onboarding
       // Skip to income step (step 3) unless already past the auth step
-      if (currentStep <= 2) {
+      if (!hasAutoSkipped && currentStep <= 2) {
         // Pre-fill from existing profile if available
         if (profile?.monthlyIncome) {
           setIncome(profile.monthlyIncome.toString());
@@ -68,18 +69,23 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
           setCurrency(profile.currency);
         }
         setCurrentStep(3);
+        setHasAutoSkipped(true);
       }
     }
-  }, [user, authLoading, isLoading, profile, isOnboarded, currentStep, completeOnboarding]);
+  }, [user, authLoading, isLoading, profile, isOnboarded, currentStep, hasAutoSkipped, completeOnboarding]);
 
   const handleNext = () => {
-    if (currentStep < steps.length) {
+    if (currentStep === 1 && user) {
+      setCurrentStep(3); // Skip auth step if already logged in
+    } else if (currentStep < steps.length) {
       setCurrentStep(currentStep + 1);
     }
   };
 
   const handleBack = () => {
-    if (currentStep > 1) {
+    if (currentStep === 3 && user) {
+      setCurrentStep(1); // Skip auth step if already logged in
+    } else if (currentStep > 1) {
       setCurrentStep(currentStep - 1);
     }
   };
@@ -129,17 +135,17 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
             <div className="grid grid-cols-3 gap-3 max-w-md">
               <FeatureCard
                 icon={<Wallet className="w-5 h-5 text-primary-500" />}
-                label="Track Expenses"
+                label="Registra Gastos"
                 delay={0.2}
               />
               <FeatureCard
                 icon={<Target className="w-5 h-5 text-primary-500" />}
-                label="Smart Budgets"
+                label="Organiza Quincenas"
                 delay={0.3}
               />
               <FeatureCard
                 icon={<Sparkles className="w-5 h-5 text-primary-500" />}
-                label="AI Insights"
+                label="Análisis"
                 delay={0.4}
               />
             </div>
@@ -161,7 +167,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                 <Input
                   value={name}
                   onChange={(e) => setName(e.target.value)}
-                  placeholder="Your name (optional)"
+                  placeholder="Tu nombre (opcional)"
                   leftElement={<User className="w-4 h-4 text-surface-400" />}
                 />
               )}
@@ -174,7 +180,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                 autoFocus
               />
               <p className="text-xs text-surface-500 text-center">
-                This is used to suggest budget allocations
+                Este monto base nos ayuda a organizar tu ciclo financiero
               </p>
             </div>
           </StepContent>
@@ -221,24 +227,24 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
             )}>
               <div className="space-y-3">
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-surface-500">Name</span>
-                  <span className="font-medium text-surface-900 dark:text-white">{name || 'User'}</span>
+                  <span className="text-sm text-surface-500">Nombre</span>
+                  <span className="font-medium text-surface-900 dark:text-white">{name || 'Usuario'}</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-surface-500">Monthly Income</span>
+                  <span className="text-sm text-surface-500">Ingreso Base</span>
                   <span className="font-medium text-surface-900 dark:text-white">
                     {CURRENCIES.find((c) => c.code === currency)?.symbol}
                     {parseFloat(income || '0').toLocaleString()}
                   </span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-surface-500">Currency</span>
+                  <span className="text-sm text-surface-500">Moneda</span>
                   <span className="font-medium text-surface-900 dark:text-white">{currency}</span>
                 </div>
                 {user && (
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-surface-500">Account</span>
-                    <span className="font-medium text-success-500">Connected</span>
+                    <span className="text-sm text-surface-500">Cuenta</span>
+                    <span className="font-medium text-success-500">Conectada</span>
                   </div>
                 )}
               </div>
@@ -257,7 +263,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
       <div className="min-h-screen bg-surface-50 dark:bg-surface-950 flex items-center justify-center p-4">
         <div className="space-y-4 text-center">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 animate-pulse" />
-          <p className="text-surface-500">Loading your profile...</p>
+          <p className="text-surface-500">Cargando tu perfil...</p>
         </div>
       </div>
     );
@@ -290,7 +296,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                   onClick={handleBack} 
                   leftIcon={<ArrowLeft className="w-4 h-4" />}
                 >
-                  Back
+                  Atrás
                 </Button>
               ) : (
                 <div />
@@ -302,7 +308,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                   disabled={!canProceed()}
                   rightIcon={<ArrowRight className="w-4 h-4" />}
                 >
-                  Continue
+                  Continuar
                 </Button>
               ) : (
                 <Button
@@ -310,7 +316,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                   isLoading={isSubmitting}
                   rightIcon={<Sparkles className="w-4 h-4" />}
                 >
-                  Get Started
+                  Comenzar
                 </Button>
               )}
             </div>
@@ -318,7 +324,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
         </Card>
 
         <p className="text-center text-xs text-surface-400 mt-6">
-          Your data stays on your device. We respect your privacy.
+          Tus datos se guardan en tu dispositivo. Respetamos tu privacidad.
         </p>
       </div>
     </div>

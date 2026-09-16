@@ -45,8 +45,8 @@ export const BudgetPage: React.FC = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Budget</h1>
-          <p className="text-neutral-500">Manage your monthly spending limits</p>
+          <h1 className="text-2xl font-bold text-neutral-900 dark:text-white">Presupuesto</h1>
+          <p className="text-neutral-500">Administra tus límites de gastos</p>
         </div>
 
         {/* Month selector */}
@@ -75,12 +75,12 @@ export const BudgetPage: React.FC = () => {
             <TrendingUp className="w-8 h-8 text-white" />
           </div>
           <h2 className="text-xl font-semibold text-neutral-900 dark:text-white mb-2">
-            No Budget Set
+            Sin Presupuesto
           </h2>
           <p className="text-neutral-500 mb-6 max-w-sm mx-auto">
-            Set up your monthly budget to start tracking your spending and reach your financial goals.
+            Configura tu presupuesto para comenzar a organizar tus pagos fijos y metas financieras.
           </p>
-          <Button onClick={() => setShowSetup(true)}>Set Up Budget</Button>
+          <Button onClick={() => setShowSetup(true)}>Crear Presupuesto</Button>
         </Card>
       ) : (
         <div className="space-y-6">
@@ -89,10 +89,10 @@ export const BudgetPage: React.FC = () => {
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-4">
               <div>
                 <h3 className="text-lg font-semibold text-neutral-900 dark:text-white">
-                  Monthly Overview
+                  Resumen
                 </h3>
                 <p className="text-neutral-500">
-                  You've spent {formatCurrency(totalSpent, profile?.currency)} of{' '}
+                  Has gastado {formatCurrency(totalSpent, profile?.currency)} de{' '}
                   {formatCurrency(totalBudget, profile?.currency)}
                 </p>
               </div>
@@ -105,7 +105,7 @@ export const BudgetPage: React.FC = () => {
                     : 'success'
                 }
               >
-                {totalPercentage}% used
+                {totalPercentage}% utilizado
               </Badge>
             </div>
             <Progress value={totalSpent} max={totalBudget} size="lg" />
@@ -130,7 +130,7 @@ export const BudgetPage: React.FC = () => {
           {/* Monthly Comparison Chart */}
           <Card>
             <h3 className="text-lg font-semibold text-neutral-900 dark:text-white mb-6">
-              Spending History
+              Historial de Gastos
             </h3>
             <MonthlyComparisonChart />
           </Card>

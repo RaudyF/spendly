@@ -80,7 +80,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
       {/* Amount */}
       <div>
         <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-          Amount
+          Monto
         </label>
         <div className="relative">
           <span className="absolute left-4 top-1/2 -translate-y-1/2 text-xl font-medium text-surface-400">
@@ -126,17 +126,17 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
 
       {/* Description */}
       <Input
-        label="Description"
+        label="Descripción"
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="What did you spend on?"
+        placeholder="¿En qué gastaste / ingresaste?"
         required
       />
 
       {/* Category */}
       <div>
         <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-          Category
+          Categoría
         </label>
         <div className="grid grid-cols-5 gap-2">
           {CATEGORIES.map((cat) => (
@@ -163,7 +163,7 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
       {/* Date */}
       <Input
         type="date"
-        label="Date"
+        label="Fecha"
         value={date}
         onChange={(e) => setDate(e.target.value)}
       />
@@ -171,10 +171,10 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
       {/* Submit */}
       <div className="flex gap-3 pt-2">
         <Button type="button" variant="ghost" onClick={onClose} className="flex-1">
-          Cancel
+          Cancelar
         </Button>
         <Button type="submit" className="flex-1" isLoading={isSubmitting}>
-          {expense ? 'Update' : 'Add'} Expense
+          {expense ? 'Actualizar' : 'Guardar'} Movimiento
         </Button>
       </div>
     </form>

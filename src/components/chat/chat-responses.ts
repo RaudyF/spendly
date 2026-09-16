@@ -13,7 +13,7 @@ export const getLocalResponse = (message: string, context: FinancialContext): st
   
   // Greetings
   if (lowerMessage.match(/^(hi|hello|hey|howdy|greetings)/)) {
-    return "Hello! I'm your Spendly assistant. I can help you understand your spending, suggest ways to save, and answer questions about managing your finances. What would you like to know?";
+    return "Hello! I'm your SaldoClaro assistant. I can help you understand your spending, suggest ways to save, and answer questions about managing your finances. What would you like to know?";
   }
   
   // How am I doing / status questions
@@ -81,7 +81,7 @@ export const getLocalResponse = (message: string, context: FinancialContext): st
   // Categories
   if (lowerMessage.includes('categor')) {
     const categories = CATEGORIES.map(c => c.name).join(', ');
-    return `Spendly supports these expense categories: ${categories}. When you add an expense, it gets categorized to help you understand your spending patterns.`;
+    return `SaldoClaro supports these expense categories: ${categories}. When you add an expense, it gets categorized to help you understand your spending patterns.`;
   }
   
   // Help

@@ -1,36 +1,16 @@
-import { GoogleGenerativeAI, HarmCategory, HarmBlockThreshold } from '@google/generative-ai';
+import { GoogleGenAI } from '@google/genai';
 
 // Initialize Gemini AI with API key
 const API_KEY = process.env.NEXT_PUBLIC_GEMINI_API_KEY || '';
 
-let genAI: GoogleGenerativeAI | null = null;
+let genAI: GoogleGenAI | null = null;
 
 if (API_KEY) {
-  genAI = new GoogleGenerativeAI(API_KEY);
+  genAI = new GoogleGenAI({ apiKey: API_KEY });
 }
 
-// Safety settings for the model
-const safetySettings = [
-  {
-    category: HarmCategory.HARM_CATEGORY_HARASSMENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_HATE_SPEECH,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_SEXUALLY_EXPLICIT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-  {
-    category: HarmCategory.HARM_CATEGORY_DANGEROUS_CONTENT,
-    threshold: HarmBlockThreshold.BLOCK_MEDIUM_AND_ABOVE,
-  },
-];
-
 // System prompt for the budget assistant
-const SYSTEM_PROMPT = `You are Spendly AI, a friendly and knowledgeable personal finance assistant. Your role is to help users manage their finances better within the Spendly app.
+const SYSTEM_PROMPT = `You are SaldoClaro AI, a friendly and knowledgeable personal finance assistant. Your role is to help users manage their finances better within the SaldoClaro app.
 
 Key capabilities:
 - Analyze spending patterns and provide insights
@@ -122,37 +102,21 @@ export async function chatWithAssistant(
   }
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      safetySettings,
-    });
-
-    // Build conversation history
     const contextMessage = financialContext ? buildContextMessage(financialContext) : '';
-    
     const conversationHistory = history.map((msg) => ({
       role: msg.role === 'user' ? 'user' : 'model',
       parts: [{ text: msg.content }],
     }));
 
-    // Start chat with system prompt and context
-    const chat = model.startChat({
-      history: [
-        {
-          role: 'user',
-          parts: [{ text: `System instructions: ${SYSTEM_PROMPT}${contextMessage ? `\n\n${contextMessage}` : ''}` }],
-        },
-        {
-          role: 'model',
-          parts: [{ text: "I understand. I'm Spendly AI, ready to help you manage your finances effectively. How can I assist you today?" }],
-        },
-        ...conversationHistory,
-      ],
+    const chat = genAI.chats.create({
+      model: 'gemini-3.8-flash',
+      config: {
+        systemInstruction: SYSTEM_PROMPT + (contextMessage ? `\n\n${contextMessage}` : ''),
+      }
     });
 
-    const result = await chat.sendMessage(message);
-    const response = result.response;
-    return response.text();
+    const result = await chat.sendMessage({ message });
+    return result.text || '';
   } catch (error: any) {
     console.error('Gemini AI error:', error);
     
@@ -177,19 +141,17 @@ export async function generateQuickInsights(
   }
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      safetySettings,
-    });
-
     const contextMessage = buildContextMessage(context);
     
     const prompt = `Based on this financial data, provide exactly 3 brief, actionable insights. Each insight should be one sentence, practical, and specific. Format as a simple numbered list without bullet points or special characters.
 
 ${contextMessage}`;
 
-    const result = await model.generateContent(prompt);
-    const response = result.response.text();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: prompt
+    });
+    const response = result.text || '';
     
     // Parse the response into individual insights
     const insights = response
@@ -251,19 +213,17 @@ export async function categorizeExpenseAI(description: string): Promise<string> 
   }
 
   try {
-    const model = genAI.getGenerativeModel({
-      model: 'gemini-1.5-flash',
-      safetySettings,
-    });
-
     const prompt = `Categorize this expense into exactly one of these categories: food, transport, shopping, utilities, entertainment, health, education, travel, subscriptions, other.
 
 Expense: "${description}"
 
 Reply with only the category name in lowercase, nothing else.`;
 
-    const result = await model.generateContent(prompt);
-    const category = result.response.text().trim().toLowerCase();
+    const result = await genAI.models.generateContent({
+      model: 'gemini-3.8-flash',
+      contents: prompt
+    });
+    const category = (result.text || '').trim().toLowerCase();
     
     const validCategories = [
       'food', 'transport', 'shopping', 'utilities', 'entertainment',

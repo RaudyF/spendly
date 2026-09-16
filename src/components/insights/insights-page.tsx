@@ -52,10 +52,10 @@ export const InsightsPage: React.FC = () => {
             <div className="w-10 h-10 rounded-xl bg-primary-500 flex items-center justify-center shadow-soft-sm">
               <Sparkles className="w-5 h-5 text-white" />
             </div>
-            AI Insights
+            Análisis Inteligente
           </h1>
           <p className="text-surface-500 mt-1">
-            Smart recommendations powered by AI
+            Recomendaciones personalizadas para mejorar tu salud financiera
           </p>
         </div>
         <Button
@@ -65,7 +65,7 @@ export const InsightsPage: React.FC = () => {
             <RefreshCw className={cn('w-4 h-4', isRefreshing && 'animate-spin')} />
           }
         >
-          Refresh
+          Actualizar
         </Button>
       </motion.div>
 
@@ -76,10 +76,10 @@ export const InsightsPage: React.FC = () => {
           <div>
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-lg font-semibold text-surface-900 dark:text-white">
-                Your Insights
+                Tus Análisis
               </h2>
               {unreadInsights.length > 0 && (
-                <Badge variant="primary">{unreadInsights.length} new</Badge>
+                <Badge variant="primary">{unreadInsights.length} nuevos</Badge>
               )}
             </div>
 
@@ -87,11 +87,11 @@ export const InsightsPage: React.FC = () => {
               <Card className="py-12">
                 <EmptyState
                   icon={<Sparkles className="w-12 h-12" />}
-                  title="No insights yet"
-                  description="Add some expenses to get personalized AI-powered insights about your spending habits."
+                  title="Aún no hay análisis"
+                  description="Añade algunos movimientos para obtener recomendaciones de IA personalizadas sobre tus finanzas."
                   action={
                     <Button onClick={() => window.location.href = '/expenses'}>
-                      Add Expense
+                      Añadir Movimiento
                     </Button>
                   }
                 />
@@ -132,9 +132,9 @@ export const InsightsPage: React.FC = () => {
                     </div>
                     <div>
                       <h3 className="font-semibold text-surface-900 dark:text-white">
-                        Spending Alerts
+                        Alertas de Gastos
                       </h3>
-                      <p className="text-xs text-surface-500">Unusual patterns detected</p>
+                      <p className="text-xs text-surface-500">Patrones inusuales detectados</p>
                     </div>
                   </div>
                   <div className="space-y-3">

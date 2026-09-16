@@ -5,7 +5,7 @@ import * as neon from '@/lib/neon';
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { userId, expenses, budgets, goals, profile } = body;
+    const { userId, expenses, budgets, goals, profile, obligations } = body;
 
     if (!userId) {
       return NextResponse.json({ error: 'User ID is required' }, { status: 400 });
@@ -18,6 +18,7 @@ export async function POST(request: NextRequest) {
       expenses: 0,
       budgets: 0,
       goals: 0,
+      obligations: 0,
       profile: false,
     };
 
@@ -86,6 +87,22 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Sync obligations
+    if (obligations && Array.isArray(obligations)) {
+      for (const obligation of obligations) {
+        await neon.createObligation({
+          id: obligation.id,
+          userId: userId,
+          name: obligation.name,
+          amount: obligation.amount,
+          category: obligation.category,
+          payCycle: obligation.payCycle,
+          isPaid: obligation.isPaid,
+        });
+        results.obligations++;
+      }
+    }
+
     return NextResponse.json({
       success: true,
       message: 'Data synced to cloud successfully',
@@ -114,10 +131,11 @@ export async function GET(request: NextRequest) {
     await neon.initializeTables();
 
     // Fetch all user data from cloud
-    const [expenses, budgets, goals, settings] = await Promise.all([
+    const [expenses, budgets, goals, obligations, settings] = await Promise.all([
       neon.getExpenses(userId),
       neon.getBudgets(userId),
       neon.getGoals(userId),
+      neon.getObligations(userId),
       neon.getSettings(userId),
     ]);
 
@@ -154,6 +172,17 @@ export async function GET(request: NextRequest) {
       updatedAt: g.updated_at,
     }));
 
+    const transformedObligations = obligations.map((o: any) => ({
+      id: o.id,
+      name: o.name,
+      amount: parseFloat(o.amount),
+      category: o.category,
+      payCycle: o.pay_cycle,
+      isPaid: o.is_paid,
+      createdAt: o.created_at,
+      updatedAt: o.updated_at,
+    }));
+
     // Transform profile from settings
     const profile = settings ? {
       id: 'profile',
@@ -170,6 +199,7 @@ export async function GET(request: NextRequest) {
         expenses: transformedExpenses,
         budgets: transformedBudgets,
         goals: transformedGoals,
+        obligations: transformedObligations,
         profile,
       },
     });

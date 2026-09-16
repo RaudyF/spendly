@@ -23,13 +23,15 @@ interface GoalCardProps {
   onAddFunds: () => void;
 }
 
-export const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete, onAddFunds }) => {
-  const profile = useStore((state) => state.profile);
+export const GoalCard = React.forwardRef<HTMLDivElement, GoalCardProps>(
+  ({ goal, onEdit, onDelete, onAddFunds }, ref) => {
+    const profile = useStore((state) => state.profile);
   const percentage = calculatePercentage(goal.currentAmount, goal.targetAmount);
   const isCompleted = goal.currentAmount >= goal.targetAmount;
 
   return (
     <motion.div
+      ref={ref}
       layout
       initial={{ opacity: 0, scale: 0.95 }}
       animate={{ opacity: 1, scale: 1 }}
@@ -63,7 +65,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete, onAd
         {isCompleted ? (
           <Badge variant="success" className="flex items-center gap-1">
             <Check className="w-3 h-3" />
-            Completed!
+            ¡Completado!
           </Badge>
         ) : (
           <div className="flex items-center gap-1">
@@ -102,7 +104,7 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete, onAd
             transition={{ duration: 0.5 }}
           />
         </div>
-        <p className="text-center text-sm text-neutral-500 mt-2">{percentage}% complete</p>
+        <p className="text-center text-sm text-neutral-500 mt-2">{percentage}% completado</p>
       </div>
 
       {!isCompleted && (
@@ -112,9 +114,11 @@ export const GoalCard: React.FC<GoalCardProps> = ({ goal, onEdit, onDelete, onAd
           onClick={onAddFunds}
           leftIcon={<Plus className="w-4 h-4" />}
         >
-          Add Funds
+          Aportar
         </Button>
       )}
     </motion.div>
   );
-};
+});
+
+GoalCard.displayName = 'GoalCard';

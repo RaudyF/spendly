@@ -35,8 +35,9 @@ interface InsightCardProps {
   index: number;
 }
 
-export const InsightCard: React.FC<InsightCardProps> = ({ insight, onDismiss, index }) => {
-  const typeConfig = {
+export const InsightCard = React.forwardRef<HTMLDivElement, InsightCardProps>(
+  ({ insight, onDismiss, index }, ref) => {
+    const typeConfig = {
     tip: {
       icon: Lightbulb,
       color: 'text-accent-500',
@@ -72,6 +73,7 @@ export const InsightCard: React.FC<InsightCardProps> = ({ insight, onDismiss, in
 
   return (
     <motion.div
+      ref={ref}
       layout
       variants={fadeInUp}
       initial="initial"
@@ -138,4 +140,6 @@ export const InsightCard: React.FC<InsightCardProps> = ({ insight, onDismiss, in
       </div>
     </motion.div>
   );
-};
+});
+
+InsightCard.displayName = 'InsightCard';

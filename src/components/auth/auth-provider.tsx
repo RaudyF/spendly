@@ -54,7 +54,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithGoogle();
     } catch (err: any) {
+      console.error('[FirebaseAuthError: Google]', { code: err.code, message: err.message });
       setError(err.message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -66,7 +68,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithGithub();
     } catch (err: any) {
+      console.error('[FirebaseAuthError: Github]', { code: err.code, message: err.message });
       setError(err.message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -78,7 +82,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signInWithEmail(email, password);
     } catch (err: any) {
+      console.error('[FirebaseAuthError: EmailSignIn]', { code: err.code, message: err.message });
       setError(err.message);
+      throw err;
     } finally {
       setIsLoading(false);
     }
@@ -90,7 +96,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await signUpWithEmail(email, password, name);
     } catch (err: any) {
+      console.error('[FirebaseAuthError: EmailSignUp]', { code: err.code, message: err.message });
       setError(err.message);
+      throw err;
     } finally {
       setIsLoading(false);
     }

@@ -4,6 +4,7 @@ import React, { useState } from 'react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Logo } from '@/components/ui/logo';
 import {
   Moon,
   Sun,
@@ -54,14 +55,7 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
       {/* Logo */}
       <div className="p-6">
         <Link href="/dashboard" className="flex items-center gap-3 group">
-          <img 
-            src="/images/logo.svg" 
-            alt="Spendly" 
-            className="w-10 h-10 rounded-xl shadow-soft-md transition-transform duration-300 group-hover:scale-105"
-          />
-          <span className="text-xl font-bold text-surface-900 dark:text-white">
-            Spendly
-          </span>
+          <Logo className="scale-90 origin-left" />
         </Link>
       </div>
 
@@ -129,7 +123,7 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
               <Moon className="w-5 h-5" />
             </motion.div>
           </div>
-          <span>{resolvedTheme === 'dark' ? 'Light Mode' : 'Dark Mode'}</span>
+          <span>{resolvedTheme === 'dark' ? 'Modo Claro' : 'Modo Oscuro'}</span>
         </button>
       </div>
 
@@ -184,7 +178,7 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
                   )}
                 >
                   <User className="w-4 h-4" />
-                  Profile Settings
+                  Ajustes de Perfil
                 </Link>
                 {user && (
                   <button
@@ -197,7 +191,7 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
                     )}
                   >
                     <LogOut className="w-4 h-4" />
-                    Sign Out
+                    Cerrar Sesión
                   </button>
                 )}
               </motion.div>

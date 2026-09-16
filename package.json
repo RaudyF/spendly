@@ -3,13 +3,13 @@
   "version": "1.0.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
+    "dev": "next dev -p 3000 -H 0.0.0.0",
     "build": "next build",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
-    "@google/generative-ai": "^0.21.0",
+    "@google/genai": "latest",
     "@neondatabase/serverless": "^1.0.2",
     "clsx": "^2.1.0",
     "date-fns": "^3.3.1",

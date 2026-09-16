@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
-import { Providers } from '@/components/providers';
+import { DevResetButton } from '@/components/dev-reset-button';
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -16,14 +16,18 @@ const bagnard = localFont({
   display: 'swap',
 });
 
+// Dynamically import Providers with ssr: false to prevent hydration and prerender errors
+import { Providers } from "@/components/providers";
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
-  title: 'Spendly - Smart Finance Tracking',
-  description: 'Take control of your money. Track spending, set budgets, and reach your financial goals with AI-powered insights.',
-  keywords: ['budget', 'finance', 'expense tracker', 'money management', 'AI insights'],
-  authors: [{ name: 'Spendly' }],
+  title: 'SaldoClaro - Tu dinero, sin dudas',
+  description: 'Controla tus quincenas. Conoce exactamente cuánto dinero tienes libre y organiza tus obligaciones.',
+  keywords: ['budget', 'finance', 'expense tracker', 'money management', 'quincenas', 'republica dominicana'],
+  authors: [{ name: 'SaldoClaro' }],
   openGraph: {
-    title: 'Spendly - Smart Finance Tracking',
-    description: 'Take control of your money. Track spending, set budgets, and reach your financial goals with AI-powered insights.',
+    title: 'SaldoClaro - Tu dinero, sin dudas',
+    description: 'Controla tus quincenas. Conoce exactamente cuánto dinero tienes libre y organiza tus obligaciones.',
     type: 'website',
   },
 };
@@ -38,15 +42,18 @@ export const viewport: Viewport = {
   ],
 };
 
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className={`${montserrat.variable} ${bagnard.variable}`} suppressHydrationWarning>
+    <html lang="es" className={`${montserrat.variable} ${bagnard.variable}`} suppressHydrationWarning>
       <body className="min-h-screen antialiased font-sans">
-        <Providers>{children}</Providers>
+        <Providers>
+          {children}
+        </Providers>
       </body>
     </html>
   );

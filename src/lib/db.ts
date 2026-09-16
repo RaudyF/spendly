@@ -1,10 +1,10 @@
 // IndexedDB storage for offline-first approach
 // This provides persistent storage that works in the browser
 
-import { Expense, Income, Budget, SavingsGoal, UserProfile, AIInsight } from '@/types';
+import { Expense, Income, Budget, Obligation, SavingsGoal, UserProfile, AIInsight } from '@/types';
 
 const DB_NAME_PREFIX = 'smart_budget_db';
-const DB_VERSION = 1;
+const DB_VERSION = 2; // Incremented to v2 to add 'obligations' store
 
 // Get user-specific database name
 function getDbName(userId?: string): string {
@@ -14,7 +14,7 @@ function getDbName(userId?: string): string {
   return DB_NAME_PREFIX;
 }
 
-type StoreName = 'expenses' | 'incomes' | 'budgets' | 'goals' | 'profile' | 'insights';
+type StoreName = 'expenses' | 'incomes' | 'budgets' | 'obligations' | 'goals' | 'profile' | 'insights';
 
 interface StoreConfig {
   name: StoreName;
@@ -41,6 +41,14 @@ const stores: StoreConfig[] = [
     keyPath: 'id',
     indexes: [
       { name: 'month', keyPath: 'month', unique: false },
+      { name: 'category', keyPath: 'category', unique: false },
+    ],
+  },
+  {
+    name: 'obligations',
+    keyPath: 'id',
+    indexes: [
+      { name: 'payCycle', keyPath: 'payCycle', unique: false },
       { name: 'category', keyPath: 'category', unique: false },
     ],
   },
@@ -214,6 +222,15 @@ export const budgetsDB = {
   delete: (id: string) => db.delete('budgets', id),
   getByMonth: (month: string) => db.getByIndex<Budget>('budgets', 'month', month),
   clear: () => db.clear('budgets'),
+};
+
+export const obligationsDB = {
+  getAll: () => db.getAll<Obligation>('obligations'),
+  get: (id: string) => db.get<Obligation>('obligations', id),
+  add: (obligation: Obligation) => db.add<Obligation>('obligations', obligation),
+  update: (obligation: Obligation) => db.put<Obligation>('obligations', obligation),
+  delete: (id: string) => db.delete('obligations', id),
+  clear: () => db.clear('obligations'),
 };
 
 export const goalsDB = {

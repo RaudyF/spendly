@@ -41,9 +41,9 @@ export const DataSyncSection: React.FC = () => {
     setSyncMessage(null);
     const result = await syncToCloud();
     if (result.success) {
-      setSyncMessage({ type: 'success', text: 'Data uploaded to cloud successfully!' });
+      setSyncMessage({ type: 'success', text: '¡Datos subidos a la nube correctamente!' });
     } else {
-      setSyncMessage({ type: 'error', text: result.error || 'Failed to sync to cloud' });
+      setSyncMessage({ type: 'error', text: result.error || 'Error al subir a la nube' });
     }
     setTimeout(() => setSyncMessage(null), 5000);
   };
@@ -53,22 +53,22 @@ export const DataSyncSection: React.FC = () => {
     setSyncMessage(null);
     const result = await syncFromCloud();
     if (result.success) {
-      setSyncMessage({ type: 'success', text: 'Data downloaded from cloud successfully!' });
+      setSyncMessage({ type: 'success', text: '¡Datos descargados de la nube correctamente!' });
     } else {
-      setSyncMessage({ type: 'error', text: result.error || 'Failed to sync from cloud' });
+      setSyncMessage({ type: 'error', text: result.error || 'Error al descargar de la nube' });
     }
     setTimeout(() => setSyncMessage(null), 5000);
   };
 
   const formatLastSyncTime = (isoString: string | null) => {
-    if (!isoString) return 'Never synced';
+    if (!isoString) return 'Nunca sincronizado';
     const date = new Date(isoString);
-    return `Last synced: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
+    return `Última sincronización: ${date.toLocaleDateString()} ${date.toLocaleTimeString()}`;
   };
 
   return (
     <>
-      <SettingsSection title="Data & Sync" description="Manage your financial data and cloud sync">
+      <SettingsSection title="Datos y Sincronización" description="Administra tus datos financieros y sincronización en la nube">
         {/* Sync Status Message */}
         {syncMessage && (
           <div className={`mx-5 mt-4 p-3 rounded-lg flex items-center gap-2 ${
@@ -101,7 +101,7 @@ export const DataSyncSection: React.FC = () => {
                 <Cloud className="w-5 h-5 text-accent-600 dark:text-accent-400" />
               </div>
               <div>
-                <p className="font-medium text-surface-900 dark:text-white">Cloud Sync</p>
+                <p className="font-medium text-surface-900 dark:text-white">Sincronización en la Nube</p>
                 <p className="text-sm text-surface-500">
                   {formatLastSyncTime(sync.lastSyncTime)}
                 </p>
@@ -110,7 +110,7 @@ export const DataSyncSection: React.FC = () => {
             {sync.isSyncing && (
               <div className="flex items-center gap-2 text-accent-600 dark:text-accent-400">
                 <RefreshCw className="w-4 h-4 animate-spin" />
-                <span className="text-sm">Syncing...</span>
+                <span className="text-sm">Sincronizando...</span>
               </div>
             )}
           </div>
@@ -124,7 +124,7 @@ export const DataSyncSection: React.FC = () => {
               leftIcon={<Upload className="w-4 h-4" />}
               className="flex-1"
             >
-              Upload to Cloud
+              Subir a la Nube
             </Button>
             <Button
               variant="outline"
@@ -134,13 +134,13 @@ export const DataSyncSection: React.FC = () => {
               leftIcon={<Download className="w-4 h-4" />}
               className="flex-1"
             >
-              Download from Cloud
+              Descargar de la Nube
             </Button>
           </div>
           
           {!user && (
             <p className="text-xs text-surface-500 text-center">
-              Sign in to enable cloud sync
+              Inicia sesión para habilitar la sincronización
             </p>
           )}
         </div>
@@ -150,23 +150,23 @@ export const DataSyncSection: React.FC = () => {
         <SettingsItem
           icon={<Download className="w-5 h-5" />}
           iconColor="bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400"
-          title="Export Data"
-          description="Download your data as CSV or JSON"
+          title="Exportar Datos"
+          description="Descarga tus datos como CSV o JSON"
           onClick={() => setShowExportModal(true)}
         />
         <SettingsItem
           icon={<Upload className="w-5 h-5" />}
           iconColor="bg-blue-100 dark:bg-blue-900/30 text-blue-600 dark:text-blue-400"
-          title="Import Data"
-          description="Restore from a backup file"
-          badge="Coming Soon"
+          title="Importar Datos"
+          description="Restaura desde una copia de seguridad"
+          badge="Próximamente"
           badgeVariant="info"
         />
         <SettingsItem
           icon={<Trash2 className="w-5 h-5" />}
           iconColor="bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400"
-          title="Clear All Data"
-          description="Permanently delete everything"
+          title="Borrar Todos los Datos"
+          description="Elimina todo permanentemente"
           onClick={() => setShowClearDataConfirm(true)}
         />
       </SettingsSection>
@@ -180,9 +180,9 @@ export const DataSyncSection: React.FC = () => {
         isOpen={showClearDataConfirm}
         onClose={() => setShowClearDataConfirm(false)}
         onConfirm={handleClearData}
-        title="Clear All Data?"
-        description="This will permanently delete all your expenses, budgets, goals, and settings. This action cannot be undone."
-        confirmText="Delete Everything"
+        title="¿Borrar Todos los Datos?"
+        description="Esto eliminará permanentemente todos tus movimientos, presupuestos, metas y configuraciones. Esta acción no se puede deshacer."
+        confirmText="Borrar Todo"
         variant="danger"
       />
     </>
