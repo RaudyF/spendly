@@ -1,10 +1,26 @@
 import { Income } from '@/types';
 import { incomesDB } from '@/lib/db';
-import { generateId } from '@/lib/utils';
+import { generateId, getPayCycleFromDate } from '@/lib/utils';
 import { StoreSet, StoreGet } from '../types';
+import { isSalaryIncome } from './stats-actions';
 
 export const createIncomeActions = (set: StoreSet, get: StoreGet) => ({
   addIncome: async (incomeData: Omit<Income, 'id' | 'createdAt' | 'updatedAt'>) => {
+    // Si es tipo salario, evitar duplicar confirmaciones para la misma quincena y mes
+    if (incomeData.type === 'salary') {
+      const cycle = incomeData.payCycle || getPayCycleFromDate(incomeData.date);
+      const month = incomeData.date.slice(0, 7);
+      const existingSalary = get().incomes.find(
+        (i) =>
+          isSalaryIncome(i) &&
+          i.date.startsWith(month) &&
+          (i.payCycle || getPayCycleFromDate(i.date)) === cycle
+      );
+      if (existingSalary) {
+        return existingSalary;
+      }
+    }
+
     const now = new Date().toISOString();
     const income: Income = {
       ...incomeData,

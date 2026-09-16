@@ -5,7 +5,7 @@ import { InsightsPage } from '@/components/insights';
 
 export default function Insights() {
   return (
-    <Layout title="AI Insights">
+    <Layout title="Análisis">
       <InsightsPage />
     </Layout>
   );

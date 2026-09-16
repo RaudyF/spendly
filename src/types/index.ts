@@ -18,6 +18,9 @@ export interface Expense {
   obligationId?: string;
 }
 
+export type IncomeClassification = 'salary' | 'additional';
+export type IncomeStatus = 'expected' | 'received';
+
 export interface Income {
   id: string;
   amount: number;
@@ -28,6 +31,8 @@ export interface Income {
   isRecurring?: boolean;
   recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
   payCycle?: PayCycle;
+  type?: IncomeClassification;
+  status?: IncomeStatus;
 }
 
 export interface Budget {
@@ -65,12 +70,15 @@ export interface SavingsGoal {
   icon: string;
 }
 
+export type IncomeFrequency = 'monthly' | 'biweekly' | 'variable';
+
 export interface UserProfile {
   id: string;
   name: string;
   email?: string;
   photoURL?: string;
   monthlyIncome: number;
+  incomeFrequency?: IncomeFrequency;
   currency: string;
   onboardingCompleted: boolean;
   createdAt: string;
@@ -134,20 +142,39 @@ export interface MonthlyStats {
   month: string;
   payCycle?: PayCycle;
   totalIncome: number;
+  receivedIncome: number;
+  expectedIncome: number;
+  salaryReceived: number;
+  additionalReceived: number;
+  baseSalaryExpected: number;
+  pendingSalary: number;
   totalExpenses: number;
   savings: number;
   committed: number;
   freeAvailable: number;
+  projectedFreeAvailable: number;
   byCategory: Record<CategoryType, number>;
   q1Stats?: {
     income: number;
+    expectedSalary: number;
+    salaryReceived: number;
+    additionalReceived: number;
+    receivedIncome: number;
+    pendingSalary: number;
     expenses: number;
     committed: number;
+    freeAvailable: number;
   };
   q2Stats?: {
     income: number;
+    expectedSalary: number;
+    salaryReceived: number;
+    additionalReceived: number;
+    receivedIncome: number;
+    pendingSalary: number;
     expenses: number;
     committed: number;
+    freeAvailable: number;
   };
 }
 

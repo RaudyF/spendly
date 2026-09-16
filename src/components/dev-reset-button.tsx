@@ -22,7 +22,7 @@ export const DevResetButton: React.FC = () => {
       localStorage.clear();
       
       // 3. Borrar IndexedDB
-      const req1 = indexedDB.deleteDatabase('spendly-db');
+      const req1 = indexedDB.deleteDatabase('saldoclaro-db');
       const req2 = indexedDB.deleteDatabase('firebaseLocalStorageDb');
       
       // 4. Limpiar Zustand persist (opcional ya que limpiamos todo localStorage, pero para ser seguros)

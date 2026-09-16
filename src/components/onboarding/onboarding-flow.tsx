@@ -18,6 +18,7 @@ import { useAuth } from '@/components/auth/auth-provider';
 import { Button, Input, Card } from '@/components/ui';
 import { CURRENCIES } from '@/lib/constants';
 import { cn } from '@/lib/utils';
+import { IncomeFrequency } from '@/types';
 import { steps, StepIndicator, StepContent, FeatureCard } from './onboarding-steps';
 import { AuthStep } from './auth-step';
 
@@ -38,6 +39,7 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
   const [currentStep, setCurrentStep] = useState(1);
   const [name, setName] = useState('');
   const [income, setIncome] = useState('');
+  const [incomeFrequency, setIncomeFrequency] = useState<IncomeFrequency>('monthly');
   const [currency, setCurrency] = useState('DOP');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [hasAutoSkipped, setHasAutoSkipped] = useState(false);
@@ -64,6 +66,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
         // Pre-fill from existing profile if available
         if (profile?.monthlyIncome) {
           setIncome(profile.monthlyIncome.toString());
+        }
+        if (profile?.incomeFrequency) {
+          setIncomeFrequency(profile.incomeFrequency);
         }
         if (profile?.currency) {
           setCurrency(profile.currency);
@@ -102,11 +107,12 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
         name: name || 'User',
         email: user?.email || '',
         monthlyIncome: parseFloat(income) || 0,
+        incomeFrequency,
         currency,
         onboardingCompleted: true,
       });
 
-      if (income) {
+      if (income && parseFloat(income) > 0) {
         await initializeDefaultBudgets(parseFloat(income));
       }
 
@@ -119,6 +125,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
   const canProceed = () => {
     switch (currentStep) {
       case 3:
+        if (incomeFrequency === 'variable') {
+          return true;
+        }
         return income.trim().length > 0 && parseFloat(income) > 0;
       default:
         return true;
@@ -171,16 +180,46 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                   leftElement={<User className="w-4 h-4 text-surface-400" />}
                 />
               )}
+              <div className="space-y-1.5 text-left">
+                <label className="text-xs font-medium text-surface-600 dark:text-surface-400">
+                  Frecuencia de Ingreso
+                </label>
+                <div className="grid grid-cols-3 gap-2">
+                  {(
+                    [
+                      { id: 'monthly' as const, label: 'Mensual' },
+                      { id: 'biweekly' as const, label: 'Quincenal' },
+                      { id: 'variable' as const, label: 'Variable' },
+                    ]
+                  ).map((f) => (
+                    <button
+                      key={f.id}
+                      type="button"
+                      onClick={() => setIncomeFrequency(f.id)}
+                      className={cn(
+                        'py-2 px-2 text-xs sm:text-sm font-medium rounded-lg border transition-all duration-200',
+                        incomeFrequency === f.id
+                          ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                          : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                      )}
+                    >
+                      {f.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
               <Input
                 type="number"
                 value={income}
                 onChange={(e) => setIncome(e.target.value)}
-                placeholder="0.00"
+                placeholder={incomeFrequency === 'variable' ? '0.00 (opcional)' : '0.00'}
                 leftElement={<DollarSign className="w-4 h-4 text-surface-400" />}
                 autoFocus
               />
               <p className="text-xs text-surface-500 text-center">
-                Este monto base nos ayuda a organizar tu ciclo financiero
+                {incomeFrequency === 'variable'
+                  ? 'Si tus ingresos varían, puedes registrar un estimado base o ingresar montos puntuales'
+                  : 'Este monto base nos ayuda a organizar tu ciclo financiero'}
               </p>
             </div>
           </StepContent>
@@ -202,7 +241,9 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                   )}
                 >
                   <span className="text-2xl block mb-1">{curr.symbol}</span>
-                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300">{curr.code}</span>
+                  <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+                    {curr.code === 'DOP' ? 'RD$' : curr.code}
+                  </span>
                 </button>
               ))}
             </div>
@@ -229,6 +270,16 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-surface-500">Nombre</span>
                   <span className="font-medium text-surface-900 dark:text-white">{name || 'Usuario'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-surface-500">Frecuencia</span>
+                  <span className="font-medium text-surface-900 dark:text-white">
+                    {incomeFrequency === 'monthly'
+                      ? 'Mensual'
+                      : incomeFrequency === 'biweekly'
+                      ? 'Quincenal'
+                      : 'Variable'}
+                  </span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-sm text-surface-500">Ingreso Base</span>

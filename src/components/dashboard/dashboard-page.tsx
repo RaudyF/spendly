@@ -3,13 +3,16 @@
 import React from 'react';
 import { motion } from 'framer-motion';
 import { useStore } from '@/store';
-import { Card, Skeleton } from '@/components/ui';
-import { formatCurrency, getGreeting, calculatePercentage } from '@/lib/utils';
-import { SpendingChart, CategoryPieChart } from '@/components/charts';
-import { StatsCard, containerVariants, itemVariants } from './stats-card';
+import { Card, Skeleton, Button } from '@/components/ui';
+import { formatCurrency, getGreeting, getPayCycleFromDate } from '@/lib/utils';
+import { StatsCard } from './stats-card';
+import { containerVariants, itemVariants } from './animations';
 import { HealthScore } from './health-score';
 import { RecentTransactions, BudgetOverview, ObligationsOverview } from './dashboard-widgets';
 import { IncomeIcon, ExpensesIcon, SavingsIcon, BudgetIcon } from '@/components/icons';
+import { DisponibleHero } from './disponible-hero';
+import { SpendingTrend } from './spending-trend';
+import { CategoryDonut } from './category-donut';
 
 // Main Dashboard Component
 export const Dashboard: React.FC = () => {
@@ -19,6 +22,8 @@ export const Dashboard: React.FC = () => {
   const activePayCycle = useStore((state) => state.activePayCycle);
   const setActivePayCycle = useStore((state) => state.setActivePayCycle);
   const refreshInsights = useStore((state) => state.refreshInsights);
+  const addIncome = useStore((state) => state.addIncome);
+  const currentMonth = useStore((state) => state.currentMonth);
 
   React.useEffect(() => {
     refreshInsights();
@@ -41,17 +46,57 @@ export const Dashboard: React.FC = () => {
     );
   }
 
-  const currency = profile?.currency || 'USD';
-  const savingsPercent = monthlyStats?.totalIncome 
-    ? Math.round(((monthlyStats.savings || 0) / monthlyStats.totalIncome) * 100)
-    : 0;
+  const currency = profile?.currency || 'DOP';
+  const q1Pending = monthlyStats?.q1Stats?.pendingSalary ?? 0;
+  const q2Pending = monthlyStats?.q2Stats?.pendingSalary ?? 0;
+  const q1Received = monthlyStats?.q1Stats?.salaryReceived ?? 0;
+  const q2Received = monthlyStats?.q2Stats?.salaryReceived ?? 0;
+  const q1Expected = monthlyStats?.q1Stats?.expectedSalary ?? 0;
+  const q2Expected = monthlyStats?.q2Stats?.expectedSalary ?? 0;
+
+  const handleConfirmSalary = async (cycle: 'Q1' | 'Q2') => {
+    const stats = useStore.getState().monthlyStats;
+    const pending = cycle === 'Q1'
+      ? (stats?.q1Stats?.pendingSalary ?? 0)
+      : (stats?.q2Stats?.pendingSalary ?? 0);
+
+    if (pending <= 0) return;
+
+    const dateStr = cycle === 'Q1'
+      ? `${currentMonth}-15T12:00:00.000Z`
+      : `${currentMonth}-28T12:00:00.000Z`;
+
+    await addIncome({
+      amount: pending,
+      source: `Salario ${cycle}`,
+      date: dateStr,
+      payCycle: cycle,
+      type: 'salary',
+      status: 'received',
+    });
+  };
+
+  const handleConfirmBoth = async () => {
+    if (q1Pending > 0) {
+      await handleConfirmSalary('Q1');
+    }
+    if (q2Pending > 0) {
+      await handleConfirmSalary('Q2');
+    }
+  };
+
+  const freeAvailable = monthlyStats?.freeAvailable || 0;
+  const projectedFreeAvailable = monthlyStats?.projectedFreeAvailable;
+  const receivedIncome = monthlyStats?.receivedIncome || 0;
+  const committed = monthlyStats?.committed || 0;
+  const totalExpenses = monthlyStats?.totalExpenses || 0;
 
   return (
     <motion.div
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="p-4 lg:p-8 space-y-4 sm:space-y-6 max-w-7xl mx-auto pb-24 sm:pb-8"
+      className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 sm:pb-8"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -82,62 +127,149 @@ export const Dashboard: React.FC = () => {
         </div>
       </motion.div>
 
-      {/* Stats Cards - 2x2 grid on mobile for better visibility */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
+      {/* Disponible Hero (Landing aesthetic center) */}
+      <DisponibleHero
+        freeAvailable={freeAvailable}
+        projectedFreeAvailable={projectedFreeAvailable}
+        receivedIncome={receivedIncome}
+        committed={committed}
+        totalExpenses={totalExpenses}
+        currency={currency}
+        activePayCycle={activePayCycle}
+        currentMonth={currentMonth}
+        pendingSalary={q1Pending + q2Pending}
+        expectedSalary={q1Expected + q2Expected}
+        salaryReceived={q1Received + q2Received}
+        onConfirmSalary={handleConfirmSalary}
+        onConfirmBoth={handleConfirmBoth}
+      />
+
+      {/* Stats Cards Row - 1 col mobile, 2 col tablet/laptop, 4 col desktop */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
         <StatsCard
           title="Ingresos"
-          value={formatCurrency(monthlyStats?.totalIncome || 0, currency)}
+          value={formatCurrency(receivedIncome, currency)}
+          subtitle={
+            profile?.incomeFrequency === 'variable'
+              ? (receivedIncome ? 'Ingresos reales' : 'Sin cobros')
+              : monthlyStats?.expectedIncome
+              ? `Esperado: ${formatCurrency(monthlyStats.expectedIncome, currency)}`
+              : undefined
+          }
           icon={IncomeIcon}
           color="success"
+          delay={0.1}
         />
         <StatsCard
           title="Gastos"
-          value={formatCurrency(monthlyStats?.totalExpenses || 0, currency)}
+          value={formatCurrency(totalExpenses, currency)}
+          subtitle="Egresos del ciclo"
           icon={ExpensesIcon}
           color="danger"
+          delay={0.2}
         />
         <StatsCard
-          title="Disponible Libre"
-          value={formatCurrency(Math.abs(monthlyStats?.freeAvailable || 0), currency)}
-          trend={(monthlyStats?.freeAvailable || 0) >= 0 ? 'up' : 'down'}
+          title="Ahorros / Remanente"
+          value={formatCurrency(freeAvailable, currency)}
+          subtitle={projectedFreeAvailable !== undefined ? `Proyectado: ${formatCurrency(projectedFreeAvailable, currency)}` : undefined}
+          trend={freeAvailable >= 0 ? 'up' : 'down'}
+          change={48}
           icon={SavingsIcon}
           color="primary"
+          delay={0.3}
         />
         <StatsCard
-          title="Comprometido"
-          value={formatCurrency(monthlyStats?.committed || 0, currency)}
+          title="Obligaciones Fijas"
+          value={formatCurrency(committed, currency)}
+          subtitle="Comprometido este mes"
           icon={BudgetIcon}
           color="secondary"
+          delay={0.4}
         />
       </div>
 
-      {/* Charts Row */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
-        <motion.div variants={itemVariants}>
-          <Card className="h-full">
-            <h3 className="font-semibold text-surface-900 dark:text-white mb-4 sm:mb-6 text-sm sm:text-base">
-              Tendencia de Gastos
-            </h3>
-            <SpendingChart />
-          </Card>
-        </motion.div>
-        <motion.div variants={itemVariants}>
-          <Card className="h-full">
-            <h3 className="font-semibold text-surface-900 dark:text-white mb-4 sm:mb-6 text-sm sm:text-base">
-              Gastos por Categoría
-            </h3>
-            <CategoryPieChart />
-          </Card>
-        </motion.div>
-      </div>
+      {/* Conditional Charts Row - Only show when there are expenses */}
+      {totalExpenses > 0 ? (
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0 overflow-hidden">
+          <div className="xl:col-span-7 min-w-0 overflow-hidden">
+            <SpendingTrend />
+          </div>
+          <div className="xl:col-span-5 min-w-0 overflow-hidden">
+            <CategoryDonut />
+          </div>
+        </div>
+      ) : null}
 
-      {/* Bottom Row - Stack on mobile, 4 columns on desktop */}
-      <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 sm:gap-6">
-        <HealthScore />
-        <ObligationsOverview />
-        <BudgetOverview />
-        <RecentTransactions />
-      </div>
+      {/* Bottom Row - Responsive grid: 1 col mobile, 2 col tablet, 4 col desktop */}
+      {(() => {
+        const obligationsList = (useStore.getState().obligations || []).filter(
+          (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
+        );
+        const expensesList = (useStore.getState().expenses || []).filter((e) => {
+          if (!e.date.startsWith(currentMonth)) return false;
+          if (activePayCycle === 'MONTHLY') return true;
+          return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
+        });
+
+        const hasObligations = obligationsList.length > 0;
+        const hasTransactions = expensesList.length > 0;
+
+        // If both obligations and recent transactions are empty, show single compact "Completa tu resumen" card
+        if (!hasObligations && !hasTransactions) {
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 min-w-0 overflow-hidden">
+              <div className="min-w-0 overflow-hidden">
+                <HealthScore />
+              </div>
+              <div className="min-w-0 overflow-hidden">
+                <BudgetOverview />
+              </div>
+              <div className="xl:col-span-2 min-w-0 overflow-hidden">
+                <Card className="h-full flex flex-col justify-between p-6">
+                  <div>
+                    <h3 className="font-semibold text-surface-900 dark:text-white text-base mb-1">
+                      Completa tu resumen
+                    </h3>
+                    <p className="text-xs text-surface-500 mb-4">
+                      Añade tus obligaciones fijas y movimientos para obtener el control completo de tu quincena.
+                    </p>
+                  </div>
+                  <div className="flex flex-wrap gap-3">
+                    <Button onClick={() => window.location.href = '/obligations'} size="sm">
+                      Añadir Obligación
+                    </Button>
+                    <Button onClick={() => window.location.href = '/expenses'} size="sm" variant="outline">
+                      Añadir Movimiento
+                    </Button>
+                  </div>
+                </Card>
+              </div>
+            </div>
+          );
+        }
+
+        return (
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 min-w-0 overflow-hidden">
+            <div className="min-w-0 overflow-hidden">
+              <HealthScore />
+            </div>
+            {hasObligations && (
+              <div className="min-w-0 overflow-hidden">
+                <ObligationsOverview />
+              </div>
+            )}
+            <div className="min-w-0 overflow-hidden">
+              <BudgetOverview />
+            </div>
+            {hasTransactions && (
+              <div className="min-w-0 overflow-hidden">
+                <RecentTransactions />
+              </div>
+            )}
+          </div>
+        );
+      })()}
     </motion.div>
   );
 };
+

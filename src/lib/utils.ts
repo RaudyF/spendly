@@ -1,6 +1,7 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 import { format, parseISO, startOfMonth, endOfMonth, isWithinInterval } from 'date-fns';
+import { es } from 'date-fns/locale';
 import { CURRENCIES } from './constants';
 
 import { PayCycle } from '@/types';
@@ -44,9 +45,10 @@ export function cn(...inputs: ClassValue[]) {
 // Format currency
 export function formatCurrency(
   amount: number,
-  currencyCode: string = 'USD',
+  currencyCode: string = 'DOP',
   compact: boolean = false
 ): string {
+  const isRD = currencyCode === 'DOP' || currencyCode === 'RD$';
   const currency = CURRENCIES.find((c) => c.code === currencyCode) || CURRENCIES[0];
   
   if (compact && Math.abs(amount) >= 1000) {
@@ -55,16 +57,16 @@ export function formatCurrency(
       maximumFractionDigits: 1,
     }).format(amount);
     
-    if (currencyCode === 'DOP') return `RD$${formatted}`;
-    return `${currency.symbol}${formatted}`;
+    if (isRD) return `RD$ ${formatted}`;
+    return `${currency.symbol} ${formatted}`;
   }
 
-  if (currencyCode === 'DOP') {
+  if (isRD) {
     const formatted = new Intl.NumberFormat('en-US', {
       minimumFractionDigits: 0,
       maximumFractionDigits: 2,
     }).format(amount);
-    return `RD$${formatted}`;
+    return `RD$ ${formatted}`;
   }
 
   return new Intl.NumberFormat('en-US', {
@@ -76,9 +78,9 @@ export function formatCurrency(
 }
 
 // Format date
-export function formatDate(date: string | Date, formatStr: string = 'MMM d, yyyy'): string {
+export function formatDate(date: string | Date, formatStr: string = 'd MMM yyyy'): string {
   const dateObj = typeof date === 'string' ? parseISO(date) : date;
-  return format(dateObj, formatStr);
+  return format(dateObj, formatStr, { locale: es });
 }
 
 // Get current month string (YYYY-MM)
@@ -156,11 +158,11 @@ export function formatRelativeTime(date: string): string {
   const now = new Date();
   const diffInSeconds = Math.floor((now.getTime() - dateObj.getTime()) / 1000);
 
-  if (diffInSeconds < 60) return 'Just now';
-  if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
-  if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
-  if (diffInSeconds < 604800) return `${Math.floor(diffInSeconds / 86400)}d ago`;
-  return formatDate(date, 'MMM d');
+  if (diffInSeconds < 60) return 'Justo ahora';
+  if (diffInSeconds < 3600) return `Hace ${Math.floor(diffInSeconds / 60)}m`;
+  if (diffInSeconds < 86400) return `Hace ${Math.floor(diffInSeconds / 3600)}h`;
+  if (diffInSeconds < 604800) return `Hace ${Math.floor(diffInSeconds / 86400)}d`;
+  return formatDate(date, 'd MMM');
 }
 
 // Validate email
@@ -180,7 +182,7 @@ export function parseAmount(value: string): number {
 export function getMonthName(monthStr: string): string {
   const [year, month] = monthStr.split('-').map(Number);
   const date = new Date(year, month - 1);
-  return format(date, 'MMMM yyyy');
+  return format(date, 'MMMM yyyy', { locale: es });
 }
 
 // Calculate savings rate

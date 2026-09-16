@@ -12,7 +12,7 @@ import {
 } from 'recharts';
 import { format, subDays, parseISO, isSameDay } from 'date-fns';
 import { useStore } from '@/store';
-import { formatCurrency } from '@/lib/utils';
+import { formatCurrency, getPayCycleFromDate } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
 import { CustomTooltip } from './custom-tooltip';
 
@@ -45,11 +45,20 @@ export const SpendingChart: React.FC = () => {
       startDay = 16;
     }
     
+    // Filter expenses matching current month and active cycle
+    const cycleExpenses = expenses.filter((e) => {
+      if (!e.date.startsWith(currentMonth)) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
+    });
+
     for (let day = startDay; day <= endDay; day++) {
       const date = new Date(year, monthIndex, day);
-      const dayExpenses = expenses.filter((e) => {
+      const dayExpenses = cycleExpenses.filter((e) => {
         const expenseDate = parseISO(e.date);
-        return isSameDay(expenseDate, date);
+        const expDay = expenseDate.getDate();
+        const targetDay = Math.min(Math.max(expDay, startDay), endDay);
+        return targetDay === day;
       });
       const total = dayExpenses.reduce((sum, e) => sum + e.amount, 0);
       

@@ -58,7 +58,7 @@ export const GoalsPage: React.FC = () => {
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
           <Card className="text-center">
             <p className="text-sm text-neutral-500 mb-1">Ahorro Actual</p>
-            <p className="text-2xl font-bold gradient-text">
+            <p className="text-2xl font-bold text-primary-600 dark:text-primary-400">
               {formatCurrency(totalSaved, profile?.currency)}
             </p>
           </Card>

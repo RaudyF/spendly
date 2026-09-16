@@ -9,7 +9,7 @@ import { CategoryIcon } from '@/components/category-icon';
 import { cn, formatCurrency, formatDate } from '@/lib/utils';
 import { CATEGORIES, QUICK_AMOUNTS } from '@/lib/constants';
 import { categorizeExpenseLocal } from '@/lib/ai';
-import { CategoryType, Expense } from '@/types';
+import { CategoryType, Expense, PayCycle, IncomeClassification } from '@/types';
 
 // Add/Edit Expense Form
 interface ExpenseFormProps {
@@ -20,7 +20,15 @@ interface ExpenseFormProps {
 export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) => {
   const addExpense = useStore((state) => state.addExpense);
   const updateExpense = useStore((state) => state.updateExpense);
+  const addIncome = useStore((state) => state.addIncome);
   const profile = useStore((state) => state.profile);
+  const activePayCycle = useStore((state) => state.activePayCycle);
+
+  const [movementType, setMovementType] = useState<'expense' | 'income'>(expense ? 'expense' : 'expense');
+  const [incomeType, setIncomeType] = useState<IncomeClassification>('salary');
+  const [selectedPayCycle, setSelectedPayCycle] = useState<PayCycle>(
+    expense?.payCycle || (activePayCycle === 'MONTHLY' ? 'Q1' : activePayCycle)
+  );
 
   const [amount, setAmount] = useState(expense?.amount.toString() || '');
   const [description, setDescription] = useState(expense?.description || '');
@@ -31,11 +39,11 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
 
   // Auto-categorize on description change
   React.useEffect(() => {
-    if (description && !expense && !userSelectedCategory) {
+    if (movementType === 'expense' && description && !expense && !userSelectedCategory) {
       const suggestedCategory = categorizeExpenseLocal(description);
       setCategory(suggestedCategory);
     }
-  }, [description, expense, userSelectedCategory]);
+  }, [description, expense, userSelectedCategory, movementType]);
 
   const handleCategorySelect = (cat: CategoryType) => {
     setCategory(cat);
@@ -52,20 +60,33 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
 
     setIsSubmitting(true);
     try {
-      if (expense) {
-        await updateExpense(expense.id, {
+      if (movementType === 'income') {
+        await addIncome({
           amount: parseFloat(amount),
-          description,
-          category,
+          source: description,
           date: new Date(date).toISOString(),
+          payCycle: selectedPayCycle,
+          type: incomeType,
+          status: 'received',
         });
       } else {
-        await addExpense({
-          amount: parseFloat(amount),
-          description,
-          category,
-          date: new Date(date).toISOString(),
-        });
+        if (expense) {
+          await updateExpense(expense.id, {
+            amount: parseFloat(amount),
+            description,
+            category,
+            date: new Date(date).toISOString(),
+            payCycle: selectedPayCycle,
+          });
+        } else {
+          await addExpense({
+            amount: parseFloat(amount),
+            description,
+            category,
+            date: new Date(date).toISOString(),
+            payCycle: selectedPayCycle,
+          });
+        }
       }
       onClose();
     } finally {
@@ -73,10 +94,105 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
     }
   };
 
-  const currencySymbol = profile?.currency === 'EUR' ? '€' : profile?.currency === 'GBP' ? '£' : '$';
+  const currencySymbol = profile?.currency === 'EUR'
+    ? '€'
+    : profile?.currency === 'GBP'
+    ? '£'
+    : (profile?.currency === 'DOP' || profile?.currency === 'RD$' || !profile?.currency ? 'RD$' : '$');
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {/* Movement Type Selector */}
+      {!expense && (
+        <div className="grid grid-cols-2 gap-2 p-1 bg-surface-100 dark:bg-surface-800 rounded-xl border border-surface-200 dark:border-surface-700">
+          <button
+            type="button"
+            onClick={() => setMovementType('expense')}
+            className={cn(
+              'py-2 text-sm font-semibold rounded-lg transition-all duration-200',
+              movementType === 'expense'
+                ? 'bg-white dark:bg-surface-700 text-danger-600 dark:text-danger-400 shadow-sm'
+                : 'text-surface-600 dark:text-surface-400 hover:text-surface-900'
+            )}
+          >
+            Gasto
+          </button>
+          <button
+            type="button"
+            onClick={() => setMovementType('income')}
+            className={cn(
+              'py-2 text-sm font-semibold rounded-lg transition-all duration-200',
+              movementType === 'income'
+                ? 'bg-white dark:bg-surface-700 text-success-600 dark:text-success-400 shadow-sm'
+                : 'text-surface-600 dark:text-surface-400 hover:text-surface-900'
+            )}
+          >
+            Ingreso
+          </button>
+        </div>
+      )}
+
+      {/* Income Classification (if movementType is income) */}
+      {movementType === 'income' && (
+        <div>
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+            Tipo de Ingreso
+          </label>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => setIncomeType('salary')}
+              className={cn(
+                'p-3 rounded-xl border text-left transition-all duration-200',
+                incomeType === 'salary'
+                  ? 'border-success-500 bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-200'
+                  : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
+              )}
+            >
+              <span className="text-sm font-semibold block">Salario / Sueldo</span>
+              <span className="text-[11px] opacity-80 block mt-0.5">Confirma lo esperado sin duplicar</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => setIncomeType('additional')}
+              className={cn(
+                'p-3 rounded-xl border text-left transition-all duration-200',
+                incomeType === 'additional'
+                  ? 'border-success-500 bg-success-50 dark:bg-success-900/20 text-success-800 dark:text-success-200'
+                  : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
+              )}
+            >
+              <span className="text-sm font-semibold block">Ingreso Adicional</span>
+              <span className="text-[11px] opacity-80 block mt-0.5">Bono, freelance, etc. (+base)</span>
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Pay Cycle Selector */}
+      <div>
+        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+          Período / Quincena
+        </label>
+        <div className="grid grid-cols-2 gap-2">
+          {(['Q1', 'Q2'] as const).map((cycle) => (
+            <button
+              key={cycle}
+              type="button"
+              onClick={() => setSelectedPayCycle(cycle)}
+              className={cn(
+                'py-2 px-3 text-sm font-medium rounded-lg border transition-all duration-200',
+                selectedPayCycle === cycle
+                  ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/30 text-primary-700 dark:text-primary-300'
+                  : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400'
+              )}
+            >
+              {cycle === 'Q1' ? 'Q1 (1 - 15)' : 'Q2 (16 - Fin de mes)'}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Amount */}
       <div>
         <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
@@ -126,39 +242,41 @@ export const ExpenseForm: React.FC<ExpenseFormProps> = ({ expense, onClose }) =>
 
       {/* Description */}
       <Input
-        label="Descripción"
+        label={movementType === 'income' ? 'Concepto / Fuente' : 'Descripción'}
         value={description}
         onChange={(e) => setDescription(e.target.value)}
-        placeholder="¿En qué gastaste / ingresaste?"
+        placeholder={movementType === 'income' ? 'Ej. Nómina, Freelance, Bono' : '¿En qué gastaste?'}
         required
       />
 
-      {/* Category */}
-      <div>
-        <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
-          Categoría
-        </label>
-        <div className="grid grid-cols-5 gap-2">
-          {CATEGORIES.map((cat) => (
-            <button
-              key={cat.id}
-              type="button"
-              onClick={() => handleCategorySelect(cat.id)}
-              className={cn(
-                'flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200',
-                category === cat.id
-                  ? 'bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-500'
-                  : 'bg-surface-50 dark:bg-surface-800 hover:bg-surface-100 dark:hover:bg-surface-700'
-              )}
-            >
-              <CategoryIcon category={cat.id} size="sm" showBackground={category === cat.id} />
-              <span className="text-[10px] font-medium text-surface-600 dark:text-surface-400 text-center line-clamp-1">
-                {cat.name.split(' ')[0]}
-              </span>
-            </button>
-          ))}
+      {/* Category (only for expenses) */}
+      {movementType === 'expense' && (
+        <div>
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+            Categoría
+          </label>
+          <div className="grid grid-cols-5 gap-2">
+            {CATEGORIES.map((cat) => (
+              <button
+                key={cat.id}
+                type="button"
+                onClick={() => handleCategorySelect(cat.id)}
+                className={cn(
+                  'flex flex-col items-center gap-1 p-3 rounded-xl transition-all duration-200',
+                  category === cat.id
+                    ? 'bg-primary-50 dark:bg-primary-900/30 ring-2 ring-primary-500'
+                    : 'bg-surface-50 dark:bg-surface-800 hover:bg-surface-100 dark:hover:bg-surface-700'
+                )}
+              >
+                <CategoryIcon category={cat.id} size="sm" showBackground={category === cat.id} />
+                <span className="text-[10px] font-medium text-surface-600 dark:text-surface-400 text-center line-clamp-1">
+                  {cat.name.split(' ')[0]}
+                </span>
+              </button>
+            ))}
+          </div>
         </div>
-      </div>
+      )}
 
       {/* Date */}
       <Input
@@ -217,7 +335,7 @@ export const ExpenseItem: React.FC<ExpenseItemProps> = ({ expense, onEdit, onDel
 
       <div className="text-right">
         <p className="font-semibold text-surface-900 dark:text-white">
-          -{formatCurrency(expense.amount, profile?.currency || 'USD')}
+          -{formatCurrency(expense.amount, profile?.currency || 'DOP')}
         </p>
         <p className="text-xs text-surface-400">
           {formatDate(expense.date, 'h:mm a')}

@@ -11,7 +11,8 @@ import { useStore } from '@/store';
 import { Card, Button, Badge, EmptyState } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { detectAnomalies } from '@/lib/ai';
-import { InsightCard, staggerContainer } from './insight-card';
+import { InsightCard } from './insight-card';
+import { staggerContainer } from './animations';
 import { WeeklyTips } from './weekly-tips';
 import { SpendingAnalysis } from './spending-analysis';
 

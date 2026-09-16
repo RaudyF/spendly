@@ -11,6 +11,7 @@ export { Card } from './card';
 
 // Display components
 export { Badge, Progress, Avatar } from './display';
+export { StatusBadge } from './status-badge';
 
 // Feedback components
 export { Skeleton, EmptyState, Divider, Switch, Tooltip } from './feedback';

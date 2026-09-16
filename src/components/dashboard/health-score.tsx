@@ -7,7 +7,7 @@ import Link from 'next/link';
 import { useStore } from '@/store';
 import { Card, Badge } from '@/components/ui';
 import { cn } from '@/lib/utils';
-import { itemVariants } from './stats-card';
+import { itemVariants } from './animations';
 
 // Financial Health Score Component
 export const HealthScore: React.FC = () => {

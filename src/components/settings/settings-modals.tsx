@@ -7,6 +7,7 @@ import { Button, Input, Divider } from '@/components/ui';
 import { Modal } from '@/components/ui/modal';
 import { CURRENCIES } from '@/lib/constants';
 import { exportToCSV, cn } from '@/lib/utils';
+import { IncomeFrequency } from '@/types';
 
 // Currency Selector Modal
 interface CurrencySelectorProps {
@@ -42,7 +43,9 @@ export const CurrencySelector: React.FC<CurrencySelectorProps> = ({
             <div className="flex items-center gap-3">
               <span className="text-xl font-medium w-8">{currency.symbol}</span>
               <div className="text-left">
-                <p className="font-medium text-surface-900 dark:text-white">{currency.code}</p>
+                <p className="font-medium text-surface-900 dark:text-white">
+                  {currency.code === 'DOP' ? 'RD$' : currency.code}
+                </p>
                 <p className="text-sm text-surface-500">{currency.name}</p>
               </div>
             </div>
@@ -69,7 +72,19 @@ export const EditProfileModal: React.FC<EditProfileProps> = ({ isOpen, onClose }
   const [name, setName] = useState(profile?.name || '');
   const [email, setEmail] = useState(profile?.email || '');
   const [monthlyIncome, setMonthlyIncome] = useState(profile?.monthlyIncome?.toString() || '');
+  const [incomeFrequency, setIncomeFrequency] = useState<IncomeFrequency>(
+    profile?.incomeFrequency || 'monthly'
+  );
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    if (profile && isOpen) {
+      setName(profile.name || '');
+      setEmail(profile.email || '');
+      setMonthlyIncome(profile.monthlyIncome?.toString() || '');
+      setIncomeFrequency(profile.incomeFrequency || 'monthly');
+    }
+  }, [profile, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -79,12 +94,18 @@ export const EditProfileModal: React.FC<EditProfileProps> = ({ isOpen, onClose }
         name,
         email,
         monthlyIncome: parseFloat(monthlyIncome) || 0,
+        incomeFrequency,
       });
       onClose();
     } finally {
       setIsSubmitting(false);
     }
   };
+
+  const currencySymbol =
+    profile?.currency === 'DOP' || profile?.currency === 'RD$' || !profile?.currency
+      ? 'RD$'
+      : (CURRENCIES.find((c) => c.code === profile?.currency)?.symbol || '$');
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Editar Perfil" size="md">
@@ -103,14 +124,58 @@ export const EditProfileModal: React.FC<EditProfileProps> = ({ isOpen, onClose }
           placeholder="tu@email.com"
           hint="Usado para recuperar cuenta"
         />
+
+        <div>
+          <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-2">
+            Frecuencia de Ingreso
+          </label>
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                { id: 'monthly' as const, label: 'Mensual' },
+                { id: 'biweekly' as const, label: 'Quincenal' },
+                { id: 'variable' as const, label: 'Variable' },
+              ]
+            ).map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => setIncomeFrequency(f.id)}
+                className={cn(
+                  'py-2 px-3 text-sm font-medium rounded-lg border transition-all duration-200 text-center',
+                  incomeFrequency === f.id
+                    ? 'border-primary-500 bg-primary-50 text-primary-700 dark:bg-primary-900/30 dark:text-primary-300'
+                    : 'border-surface-200 dark:border-surface-700 bg-surface-50 dark:bg-surface-800 text-surface-600 dark:text-surface-400 hover:border-surface-300'
+                )}
+              >
+                {f.label}
+              </button>
+            ))}
+          </div>
+          <p className="text-xs text-surface-400 mt-1.5">
+            {incomeFrequency === 'monthly'
+              ? 'Monto mensual que se divide equitativamente en quincenas (Q1 y Q2)'
+              : incomeFrequency === 'biweekly'
+              ? 'Monto base asignado individualmente a cada quincena'
+              : 'Para ingresos variables, el monto base es una referencia o estimado'}
+          </p>
+        </div>
+
         <Input
           type="number"
-          label="Ingreso Mensual"
+          label={
+            incomeFrequency === 'biweekly'
+              ? 'Ingreso por Quincena'
+              : incomeFrequency === 'variable'
+              ? 'Ingreso Mensual Estimado'
+              : 'Ingreso Mensual'
+          }
           value={monthlyIncome}
           onChange={(e) => setMonthlyIncome(e.target.value)}
           placeholder="0.00"
-          leftElement={<span className="text-base">$</span>}
+          leftElement={<span className="text-base font-semibold">{currencySymbol}</span>}
         />
+
         <div className="flex gap-3 pt-2">
           <Button type="button" variant="ghost" onClick={onClose} className="flex-1">
             Cancelar

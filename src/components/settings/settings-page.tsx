@@ -13,12 +13,14 @@ import {
   Mail,
   CheckCircle,
   UserX,
+  DollarSign,
 } from 'lucide-react';
 import { useStore } from '@/store';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Button, Avatar, Switch, Select, Divider } from '@/components/ui';
 import { ConfirmDialog } from '@/components/ui/modal';
 import { CURRENCIES } from '@/lib/constants';
+import { formatCurrency } from '@/lib/utils';
 import { SettingsSection, SettingsItem } from './settings-section';
 import { ThemeSelector, AccentColorSelector } from './theme-selectors';
 import { DataSyncSection } from './data-sync-section';
@@ -92,6 +94,10 @@ export const SettingsPage: React.FC = () => {
               </h3>
               <p className="text-sm text-surface-500">
                 {profile?.email || 'Sin correo electrónico'}
+              </p>
+              <p className="text-xs text-surface-400 mt-1">
+                Frecuencia: {profile?.incomeFrequency === 'biweekly' ? 'Quincenal' : profile?.incomeFrequency === 'variable' ? 'Variable' : 'Mensual'}
+                {profile?.monthlyIncome ? ` • ${formatCurrency(profile.monthlyIncome, profile?.currency)}` : ''}
               </p>
             </div>
           </div>
@@ -173,6 +179,18 @@ export const SettingsPage: React.FC = () => {
           title="Moneda"
           description={`${currentCurrency.name} (${currentCurrency.symbol})`}
           onClick={() => setShowCurrencySelector(true)}
+        />
+        <SettingsItem
+          icon={<DollarSign className="w-5 h-5" />}
+          title="Frecuencia de Ingreso"
+          description={
+            profile?.incomeFrequency === 'biweekly'
+              ? 'Quincenal'
+              : profile?.incomeFrequency === 'variable'
+              ? 'Variable'
+              : 'Mensual'
+          }
+          onClick={() => setShowEditProfile(true)}
         />
         <SettingsItem
           icon={<Calendar className="w-5 h-5" />}
@@ -275,7 +293,7 @@ export const SettingsPage: React.FC = () => {
       <CurrencySelector
         isOpen={showCurrencySelector}
         onClose={() => setShowCurrencySelector(false)}
-        currentCurrency={profile?.currency || 'USD'}
+        currentCurrency={profile?.currency || 'DOP'}
         onSelect={(currency) => setProfile({ currency })}
       />
 

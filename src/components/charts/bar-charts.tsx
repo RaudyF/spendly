@@ -52,7 +52,7 @@ export const MonthlyComparisonChart: React.FC = () => {
   if (data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-neutral-500">
-        No data available
+        No hay datos disponibles
       </div>
     );
   }

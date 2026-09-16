@@ -9,7 +9,7 @@ import { Card, Progress, Button, EmptyState } from '@/components/ui';
 import { CategoryIcon } from '@/components/category-icon';
 import { cn, formatCurrency, formatDate, calculatePercentage, getPayCycleFromDate } from '@/lib/utils';
 import { CATEGORIES } from '@/lib/constants';
-import { itemVariants } from './stats-card';
+import { itemVariants } from './animations';
 
 // Recent Transactions Component
 export const RecentTransactions: React.FC = () => {
@@ -21,7 +21,7 @@ export const RecentTransactions: React.FC = () => {
   const filteredExpenses = expenses.filter((e) => {
     if (!e.date.startsWith(currentMonth)) return false;
     if (activePayCycle === 'MONTHLY') return true;
-    return getPayCycleFromDate(e.date) === activePayCycle;
+    return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
   });
 
   const recentExpenses = [...filteredExpenses]
@@ -83,7 +83,7 @@ export const RecentTransactions: React.FC = () => {
                   </p>
                 </div>
                 <p className="font-semibold text-surface-900 dark:text-white text-sm">
-                  -{formatCurrency(expense.amount, profile?.currency || 'USD')}
+                  -{formatCurrency(expense.amount, profile?.currency || 'DOP')}
                 </p>
               </motion.div>
             ))}
@@ -100,8 +100,17 @@ export const BudgetOverview: React.FC = () => {
   const currentMonth = useStore((state) => state.currentMonth);
   const profile = useStore((state) => state.profile);
 
-  const monthBudgets = budgets
-    .filter((b) => b.month === currentMonth)
+  // Deduplicate by category so no duplicate rows appear
+  const monthBudgets = Object.values(
+    budgets
+      .filter((b) => b.month === currentMonth)
+      .reduce<Record<string, (typeof budgets)[0]>>((acc, b) => {
+        if (!acc[b.category] || b.limit > acc[b.category].limit) {
+          acc[b.category] = b;
+        }
+        return acc;
+      }, {})
+  )
     .sort((a, b) => b.spent - a.spent)
     .slice(0, 4);
 

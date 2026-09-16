@@ -256,7 +256,7 @@ async function clearLocalData(): Promise<void> {
  */
 export function isSyncEnabled(): boolean {
   if (typeof window === 'undefined') return false;
-  return localStorage.getItem('spendly-cloud-sync') === 'true';
+  return localStorage.getItem('saldoclaro-cloud-sync') === 'true';
 }
 
 /**
@@ -264,7 +264,7 @@ export function isSyncEnabled(): boolean {
  */
 export function setSyncEnabled(enabled: boolean): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('spendly-cloud-sync', enabled ? 'true' : 'false');
+  localStorage.setItem('saldoclaro-cloud-sync', enabled ? 'true' : 'false');
 }
 
 /**
@@ -272,7 +272,7 @@ export function setSyncEnabled(enabled: boolean): void {
  */
 export function getLastSyncTime(): Date | null {
   if (typeof window === 'undefined') return null;
-  const timestamp = localStorage.getItem('spendly-last-sync');
+  const timestamp = localStorage.getItem('saldoclaro-last-sync');
   return timestamp ? new Date(timestamp) : null;
 }
 
@@ -281,5 +281,5 @@ export function getLastSyncTime(): Date | null {
  */
 export function setLastSyncTime(date: Date = new Date()): void {
   if (typeof window === 'undefined') return;
-  localStorage.setItem('spendly-last-sync', date.toISOString());
+  localStorage.setItem('saldoclaro-last-sync', date.toISOString());
 }

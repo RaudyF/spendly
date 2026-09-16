@@ -7,21 +7,33 @@ import { StoreSet, StoreGet } from '../types';
 export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
   setBudget: async (category: CategoryType, limit: number) => {
     const month = get().currentMonth;
-    const existing = get().budgets.find(
+    const now = new Date().toISOString();
+    const existingList = get().budgets.filter(
       (b) => b.category === category && b.month === month
     );
 
-    const now = new Date().toISOString();
+    if (existingList.length > 0) {
+      const primary = existingList[0];
+      const updated: Budget = { ...primary, limit, updatedAt: now };
 
-    if (existing) {
-      const updated = { ...existing, limit, updatedAt: now };
-      
+      // Delete any duplicates in DB
+      for (let i = 1; i < existingList.length; i++) {
+        try {
+          await budgetsDB.delete(existingList[i].id);
+        } catch (e) {
+          console.error('Failed to remove duplicate budget:', e);
+        }
+      }
+
       set((state) => ({
-        budgets: state.budgets.map((b) =>
-          b.id === existing.id ? updated : b
-        ),
+        budgets: [
+          ...state.budgets.filter(
+            (b) => !(b.category === category && b.month === month)
+          ),
+          updated,
+        ],
       }));
-      
+
       try {
         await budgetsDB.update(updated);
       } catch (error) {
@@ -37,11 +49,11 @@ export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
         createdAt: now,
         updatedAt: now,
       };
-      
+
       set((state) => ({
         budgets: [...state.budgets, budget],
       }));
-      
+
       try {
         await budgetsDB.add(budget);
       } catch (error) {
@@ -56,7 +68,18 @@ export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
     const month = getCurrentMonth();
     const now = new Date().toISOString();
 
-    const budgets: Budget[] = CATEGORIES.map((cat) => ({
+    const existingForMonth = get().budgets.filter((b) => b.month === month);
+
+    // If budgets already exist for the month, remove them first from DB to prevent duplication
+    for (const b of existingForMonth) {
+      try {
+        await budgetsDB.delete(b.id);
+      } catch (e) {
+        console.error('Failed to clean up old budget before init:', e);
+      }
+    }
+
+    const newBudgets: Budget[] = CATEGORIES.map((cat) => ({
       id: generateId(),
       category: cat.id,
       limit: Math.round(monthlyIncome * (BUDGET_DEFAULTS[cat.id] / 100)),
@@ -66,12 +89,17 @@ export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
       updatedAt: now,
     }));
 
-    for (const budget of budgets) {
+    for (const budget of newBudgets) {
       await budgetsDB.add(budget);
     }
 
     set((state) => ({
-      budgets: [...state.budgets, ...budgets],
+      budgets: [
+        ...state.budgets.filter((b) => b.month !== month),
+        ...newBudgets,
+      ],
     }));
+
+    get().recalculateStats();
   },
 });

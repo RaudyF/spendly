@@ -5,7 +5,7 @@ import { GoalsPage } from '@/components/goals';
 
 export default function Goals() {
   return (
-    <Layout title="Goals">
+    <Layout title="Metas">
       <GoalsPage />
     </Layout>
   );

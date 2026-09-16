@@ -13,6 +13,7 @@ export const createProfileActions = (set: StoreSet, get: StoreGet) => ({
       name: profileData.name || existing?.name || '',
       email: profileData.email || existing?.email,
       monthlyIncome: profileData.monthlyIncome ?? existing?.monthlyIncome ?? 0,
+      incomeFrequency: profileData.incomeFrequency || existing?.incomeFrequency || 'monthly',
       currency: profileData.currency || existing?.currency || 'USD',
       onboardingCompleted:
         profileData.onboardingCompleted ?? existing?.onboardingCompleted ?? false,
@@ -22,6 +23,7 @@ export const createProfileActions = (set: StoreSet, get: StoreGet) => ({
 
     await profileDB.set(profile);
     set({ profile });
+    get().recalculateStats();
   },
 
   completeOnboarding: async () => {

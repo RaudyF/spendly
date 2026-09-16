@@ -185,7 +185,7 @@ export const FloatingChat: React.FC = () => {
               // Mobile: above bottom nav (nav height ~60px + safe area)
               'bottom-20 right-4',
               // Desktop: normal position
-              'lg:bottom-6 lg:right-6'
+              'xl:bottom-6 xl:right-6'
             )}
             aria-label="Open chat assistant"
           >
@@ -208,8 +208,8 @@ export const FloatingChat: React.FC = () => {
               'bottom-20 left-3 right-3',
               'h-[60vh] max-h-[500px]',
               // Desktop: fixed size
-              'lg:bottom-6 lg:right-6 lg:left-auto',
-              'lg:w-[360px] lg:h-[500px]',
+              'xl:bottom-6 xl:right-6 xl:left-auto',
+              'xl:w-[360px] xl:h-[500px]',
               'flex flex-col',
               'bg-white dark:bg-surface-900',
               'border border-surface-200 dark:border-surface-700',

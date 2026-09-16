@@ -53,9 +53,9 @@ export const BudgetItem: React.FC<BudgetItemProps> = ({ category, limit, spent, 
               {categoryInfo?.name}
             </h3>
             {isOverBudget && (
-              <div className="flex items-center gap-1 text-red-500 text-sm mt-0.5">
-                <AlertTriangle className="w-3 h-3" />
-                <span>Over budget!</span>
+              <div className="flex items-center gap-1 text-rose-600 dark:text-rose-400 text-xs font-medium mt-0.5">
+                <AlertTriangle className="w-3.5 h-3.5" />
+                <span>Límite superado</span>
               </div>
             )}
           </div>
@@ -120,13 +120,13 @@ export const BudgetItem: React.FC<BudgetItemProps> = ({ category, limit, spent, 
           <span className="text-sm font-medium text-neutral-500">{percentage}%</span>
           <p
             className={cn(
-              'text-xs',
-              isOverBudget ? 'text-red-500' : 'text-green-500'
+              'text-xs font-medium',
+              isOverBudget ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400'
             )}
           >
             {isOverBudget
-              ? `${formatCurrency(Math.abs(remaining), profile?.currency)} over`
-              : `${formatCurrency(remaining, profile?.currency)} left`}
+              ? `+${formatCurrency(Math.abs(remaining), profile?.currency)} excedido`
+              : `${formatCurrency(remaining, profile?.currency)} restante`}
           </p>
         </div>
       </div>

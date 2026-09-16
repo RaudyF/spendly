@@ -28,12 +28,19 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
     onClose();
   };
 
+  const dateRangeLabels: Record<'week' | 'month' | 'year' | 'all', string> = {
+    week: 'Semana',
+    month: 'Mes',
+    year: 'Año',
+    all: 'Todo',
+  };
+
   return (
     <div className="space-y-6">
       {/* Category filter */}
       <div>
         <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
-          Category
+          Categoría
         </label>
         <div className="flex flex-wrap gap-2">
           <button
@@ -45,7 +52,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
                 : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
             )}
           >
-            All
+            Todas
           </button>
           {CATEGORIES.map((cat) => (
             <button
@@ -67,7 +74,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
       {/* Date range */}
       <div>
         <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
-          Date Range
+          Rango de Fechas
         </label>
         <div className="flex gap-2">
           {(['week', 'month', 'year', 'all'] as const).map((range) => (
@@ -81,7 +88,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
                   : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
               )}
             >
-              {range.charAt(0).toUpperCase() + range.slice(1)}
+              {dateRangeLabels[range]}
             </button>
           ))}
         </div>
@@ -90,7 +97,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
       {/* Sort */}
       <div>
         <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-3">
-          Sort By
+          Ordenar Por
         </label>
         <div className="flex gap-2">
           <button
@@ -102,7 +109,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
                 : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
             )}
           >
-            Date
+            Fecha
           </button>
           <button
             onClick={() => setLocalFilters({ ...localFilters, sortBy: 'amount' })}
@@ -113,7 +120,7 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
                 : 'bg-surface-100 text-surface-600 dark:bg-surface-800 dark:text-surface-400'
             )}
           >
-            Amount
+            Monto
           </button>
         </div>
       </div>
@@ -132,10 +139,10 @@ export const FilterDropdown: React.FC<FilterDropdownProps> = ({ filters, onFilte
             });
           }}
         >
-          Reset
+          Restablecer
         </Button>
         <Button className="flex-1" onClick={handleApply}>
-          Apply Filters
+          Aplicar Filtros
         </Button>
       </div>
     </div>

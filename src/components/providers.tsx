@@ -8,164 +8,148 @@ import { AuthProvider, useAuth } from '@/components/auth/auth-provider';
 import { FloatingChat } from '@/components/chat/floating-chat';
 import { Logo } from '@/components/ui/logo';
 
-// Inner component that has access to auth context
 function AppInitializer({ children }: { children: React.ReactNode }) {
   const [initError, setInitError] = useState<string | null>(null);
-  const [isRestoring, setIsRestoring] = useState(false);
+  const [timedOut, setTimedOut] = useState(false);
   const hasCheckedCloud = useRef(false);
+
   const initialize = useStore((state) => state.initialize);
   const syncFromCloud = useStore((state) => state.syncFromCloud);
   const isOnboarded = useStore((state) => state.isOnboarded);
   const isLoading = useStore((state) => state.isLoading);
   const currentUserId = useStore((state) => state.currentUserId);
   const expenses = useStore((state) => state.expenses);
+
   const pathname = usePathname();
   const { user, isLoading: authLoading } = useAuth();
 
+  // Safeguard timeout to ensure no route is ever blocked indefinitely
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      setTimedOut(true);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
   // Initialize store when user changes
   useEffect(() => {
+    let active = true;
     const initApp = async () => {
-      // Wait for auth to finish loading
       if (authLoading) return;
-      
-      // Get user ID (undefined if not logged in)
+
       const userId = user?.id;
-      
-      // Only reinitialize if user changed
+
       if (userId !== currentUserId) {
-        hasCheckedCloud.current = false; // Reset cloud check for new user
+        hasCheckedCloud.current = false;
         try {
           await initialize(userId);
         } catch (error) {
           console.error('Failed to initialize app:', error);
-          setInitError(error instanceof Error ? error.message : 'Unknown error');
+          if (active) {
+            setInitError(error instanceof Error ? error.message : 'Unknown error');
+          }
         }
       }
     };
 
     initApp();
+    return () => {
+      active = false;
+    };
   }, [user, authLoading, initialize, currentUserId]);
 
-  // Auto-restore from cloud for returning users with no local data
+  // Task 8: Neon synchronizes strictly in the background and NEVER blocks the UI
   useEffect(() => {
     const checkAndRestoreFromCloud = async () => {
-      // Skip if already checked, no user, or still loading
       if (hasCheckedCloud.current || !user || isLoading || authLoading) return;
-      
-      // Mark as checked to prevent multiple calls
+
       hasCheckedCloud.current = true;
-      
-      // If user has no local data (not onboarded), try to restore from cloud
+
+      // If returning user has no local records, sync from cloud in background
       if (!isOnboarded && expenses.length === 0) {
-        setIsRestoring(true);
         try {
-          const result = await syncFromCloud();
-          if (result.success) {
-            console.log('[Providers] Successfully restored data from cloud');
-          }
+          await syncFromCloud();
         } catch (error) {
-          console.error('[Providers] Failed to restore from cloud:', error);
-          // Don't show error - user can proceed with onboarding if cloud has no data
-        } finally {
-          setIsRestoring(false);
+          console.error('[Providers] Background cloud restore error:', error);
         }
       }
     };
 
-    // Add a small delay to ensure store is fully initialized
-    const timer = setTimeout(checkAndRestoreFromCloud, 100);
+    const timer = setTimeout(checkAndRestoreFromCloud, 200);
     return () => clearTimeout(timer);
   }, [user, isLoading, authLoading, isOnboarded, expenses.length, syncFromCloud]);
 
-  // Add a timeout to prevent being stuck on loading forever
-  useEffect(() => {
-    if (isLoading || isRestoring) {
-      const timeout = setTimeout(() => {
-        if (isRestoring) {
-          console.warn('[Providers] Cloud restore timed out');
-          setIsRestoring(false);
-        }
-      }, 10000); // 10 second timeout
-      return () => clearTimeout(timeout);
-    }
-  }, [isLoading, isRestoring]);
+  // Task 7: Landing page must load immediately without waiting for auth, IndexedDB, or Neon
+  const isLandingPage = pathname === '/';
 
-  // Show loading only if auth is loading OR (store is loading AND user exists)
-  // Don't block loading for guests
-  const showLoading = authLoading || (isLoading && user) || isRestoring;
+  // Only show a blocking screen on authenticated interior routes if still initializing and not timed out
+  const showLoading = !isLandingPage && !timedOut && (authLoading || (isLoading && Boolean(user)));
 
-  // Show floating chat only on app pages when user is onboarded
-  // Hide on landing page, auth pages, and when not logged in
   const showFloatingChat = isOnboarded && pathname !== '/' && !pathname?.startsWith('/auth');
+
+  if (isLandingPage) {
+    return (
+      <>
+        {children}
+        {showFloatingChat && <FloatingChat />}
+      </>
+    );
+  }
+
+  if (showLoading) {
+    return (
+      <div className="min-h-screen bg-surface-50 dark:bg-surface-950 flex items-center justify-center">
+        <div className="text-center space-y-4">
+          <div className="flex items-center justify-center gap-2">
+            <Logo />
+          </div>
+          <div className="flex justify-center">
+            <div className="w-6 h-6 border-2 border-surface-200 dark:border-surface-700 border-t-primary-500 rounded-full animate-spin" />
+          </div>
+          <p className="text-sm text-surface-500">Cargando...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (initError) {
+    return (
+      <div className="min-h-screen bg-surface-50 dark:bg-surface-950 flex items-center justify-center p-4">
+        <div className="text-center space-y-4 max-w-sm">
+          <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
+            <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Error al iniciar</h2>
+          <p className="text-sm text-surface-500">{initError}</p>
+          <button
+            onClick={() => {
+              setInitError(null);
+              window.location.reload();
+            }}
+            className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
+          >
+            Reintentar
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
-      <div style={{ display: (showLoading || initError) ? 'none' : 'contents' }}>
-        {children}
-        {showFloatingChat && <FloatingChat />}
-      </div>
-      
-      {showLoading && (
-        <div className="fixed inset-0 z-[100] bg-surface-50 dark:bg-surface-950 flex items-center justify-center">
-          <div className="text-center space-y-4">
-            <div className="flex items-center justify-center gap-2">
-              <Logo />
-            </div>
-            <div className="flex justify-center">
-              <div className="w-6 h-6 border-2 border-surface-200 dark:border-surface-700 border-t-primary-500 rounded-full animate-spin" />
-            </div>
-            <p className="text-sm text-surface-500">
-              {isRestoring ? 'Cargando datos...' : 'Cargando...'}
-            </p>
-          </div>
-        </div>
-      )}
-      
-      {initError && (
-        <div className="fixed inset-0 z-[100] bg-surface-50 dark:bg-surface-950 flex items-center justify-center p-4">
-          <div className="text-center space-y-4">
-            <div className="w-16 h-16 mx-auto rounded-2xl bg-red-100 dark:bg-red-900/30 flex items-center justify-center">
-              <svg className="w-8 h-8 text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-              </svg>
-            </div>
-            <h2 className="text-lg font-semibold text-surface-900 dark:text-white">Error al iniciar</h2>
-            <p className="text-sm text-surface-500">{initError}</p>
-            <button
-              onClick={() => window.location.reload()}
-              className="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors"
-            >
-              Reintentar
-            </button>
-          </div>
-        </div>
-      )}
+      {children}
+      {showFloatingChat && <FloatingChat />}
     </>
   );
 }
 
 export function Providers({ children }: { children: React.ReactNode }) {
-  const [mounted, setMounted] = useState(false);
-
-  useEffect(() => {
-    setMounted(true);
-  }, []);
-
   return (
     <AuthProvider>
       <ThemeProvider>
-        <AppInitializer>
-          <div style={{ display: mounted ? 'contents' : 'none' }}>
-            {children}
-          </div>
-          {!mounted && (
-            <div className="fixed inset-0 z-[100] bg-surface-50 dark:bg-surface-950 flex items-center justify-center">
-              <div className="flex flex-col items-center gap-4">
-                <Logo />
-              </div>
-            </div>
-          )}
-        </AppInitializer>
+        <AppInitializer>{children}</AppInitializer>
       </ThemeProvider>
     </AuthProvider>
   );

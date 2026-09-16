@@ -11,10 +11,18 @@ import {
   PayCycle,
 } from '@/types';
 
+export interface DatabaseStatus {
+  connected: boolean;
+  configured: boolean;
+  type: 'neon' | 'postgres' | 'mock';
+  message: string;
+}
+
 export interface SyncState {
   isSyncing: boolean;
   lastSyncTime: string | null;
   syncError: string | null;
+  dbStatus?: DatabaseStatus | null;
 }
 
 export interface AppState {
@@ -83,6 +91,11 @@ export interface AppState {
   syncToCloud: () => Promise<{ success: boolean; error?: string }>;
   syncFromCloud: () => Promise<{ success: boolean; error?: string }>;
   clearSyncError: () => void;
+  checkDatabaseStatus: () => Promise<DatabaseStatus>;
+  restoreData: (
+    data: any,
+    mode: 'replace' | 'merge'
+  ) => Promise<{ success: boolean; message: string; error?: string }>;
 
   // Utility
   recalculateStats: () => void;

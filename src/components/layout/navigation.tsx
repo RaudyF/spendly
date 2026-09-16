@@ -14,6 +14,7 @@ interface LayoutProps {
   children: React.ReactNode;
   title?: string;
   showBack?: boolean;
+  backFallbackUrl?: string;
   rightAction?: React.ReactNode;
 }
 
@@ -21,20 +22,29 @@ export const Layout: React.FC<LayoutProps> = ({
   children,
   title,
   showBack,
+  backFallbackUrl,
   rightAction,
 }) => {
   const isOnboarded = useStore((state) => state.isOnboarded);
   const isLoading = useStore((state) => state.isLoading);
   const { isAuthenticated, isLoading: authLoading } = useAuth();
   const router = useRouter();
+  const [loadingTimedOut, setLoadingTimedOut] = React.useState(false);
 
-  // Show loading state
-  if (isLoading || authLoading) {
+  React.useEffect(() => {
+    const timer = setTimeout(() => {
+      setLoadingTimedOut(true);
+    }, 2500);
+    return () => clearTimeout(timer);
+  }, []);
+
+  // Show loading state (with fallback timeout so user never gets stuck on "Cargando...")
+  if ((isLoading || authLoading) && !loadingTimedOut) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-surface-50 dark:bg-surface-950">
         <div className="space-y-4 text-center">
           <div className="w-16 h-16 mx-auto rounded-2xl bg-gradient-to-br from-primary-400 to-primary-600 animate-pulse" />
-          <p className="text-surface-500">Loading...</p>
+          <p className="text-surface-500">Cargando...</p>
         </div>
       </div>
     );
@@ -50,10 +60,10 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-              Sign In Required
+              Inicio de Sesión Requerido
             </h1>
             <p className="text-surface-600 dark:text-surface-400">
-              Please sign in to access your dashboard and manage your finances.
+              Por favor inicia sesión para acceder a tu panel y gestionar tus finanzas.
             </p>
           </div>
           <div className="space-y-3">
@@ -61,7 +71,7 @@ export const Layout: React.FC<LayoutProps> = ({
               onClick={() => router.push('/')}
               className="w-full btn-primary btn-lg"
             >
-              Sign In
+              Iniciar Sesión
             </Button>
           </div>
         </div>
@@ -79,10 +89,10 @@ export const Layout: React.FC<LayoutProps> = ({
           </div>
           <div className="space-y-2">
             <h1 className="text-2xl font-bold text-surface-900 dark:text-white">
-              Complete Your Setup
+              Completa tu Configuración
             </h1>
             <p className="text-surface-600 dark:text-surface-400">
-              Let&apos;s finish setting up your account to start tracking your finances.
+              Terminemos de configurar tu cuenta para comenzar a organizar tus finanzas.
             </p>
           </div>
           <div className="space-y-3">
@@ -90,7 +100,7 @@ export const Layout: React.FC<LayoutProps> = ({
               onClick={() => router.push('/')}
               className="w-full btn-primary btn-lg"
             >
-              Continue Setup
+              Continuar Configuración
             </Button>
           </div>
         </div>
@@ -101,8 +111,13 @@ export const Layout: React.FC<LayoutProps> = ({
   return (
     <div className="min-h-screen bg-surface-50 dark:bg-surface-950">
       <Sidebar />
-      <MobileHeader title={title} showBack={showBack} rightAction={rightAction} />
-      <main className="lg:pl-64 pb-20 lg:pb-0">
+      <MobileHeader
+        title={title}
+        showBack={showBack}
+        backFallbackUrl={backFallbackUrl}
+        rightAction={rightAction}
+      />
+      <main className="lg:pl-72 pb-24 lg:pb-8">
         <div className="max-w-7xl mx-auto">{children}</div>
       </main>
       <MobileNav />
@@ -113,4 +128,4 @@ export const Layout: React.FC<LayoutProps> = ({
 // Re-export components
 export { Sidebar } from './sidebar';
 export { MobileNav, MobileHeader } from './mobile-nav';
-export { navItems } from './nav-items';
+export { navItems, navSections } from './nav-items';

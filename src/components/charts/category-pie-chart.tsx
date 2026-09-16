@@ -34,7 +34,7 @@ export const CategoryPieChart: React.FC = () => {
   if (data.length === 0) {
     return (
       <div className="h-64 flex items-center justify-center text-neutral-500">
-        No spending data yet
+        Aún no hay gastos
       </div>
     );
   }

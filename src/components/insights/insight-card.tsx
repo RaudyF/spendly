@@ -12,21 +12,7 @@ import {
 import { cn } from '@/lib/utils';
 import { Badge } from '@/components/ui';
 import { AIInsight } from '@/types';
-
-// Animation variants
-export const fadeInUp = {
-  initial: { opacity: 0, y: 20 },
-  animate: { opacity: 1, y: 0 },
-  exit: { opacity: 0, y: -10 },
-};
-
-export const staggerContainer = {
-  animate: {
-    transition: {
-      staggerChildren: 0.08,
-    },
-  },
-};
+import { fadeInUp, staggerContainer } from './animations';
 
 // Insight Card Component
 interface InsightCardProps {

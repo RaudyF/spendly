@@ -31,7 +31,7 @@ function SettingsLoading() {
 
 export default function Settings() {
   return (
-    <Layout title="Settings" showBack>
+    <Layout title="Ajustes" showBack backFallbackUrl="/dashboard">
       <SettingsPage />
     </Layout>
   );

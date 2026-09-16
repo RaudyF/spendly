@@ -38,14 +38,14 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
     }
   };
 
-  const displayName = user?.displayName || profile?.name || 'User';
-  const displayEmail = user?.email || profile?.email || 'Set up your profile';
+  const displayName = user?.displayName || profile?.name || 'Usuario';
+  const displayEmail = user?.email || profile?.email || 'Configura tu perfil';
   const avatarUrl = user?.photoURL || undefined;
 
   return (
     <aside
       className={cn(
-        'hidden lg:flex flex-col w-64 h-screen',
+        'hidden xl:flex flex-col w-64 h-screen',
         'bg-white dark:bg-surface-900',
         'border-r border-surface-100 dark:border-surface-800',
         'fixed left-0 top-0',
@@ -60,40 +60,52 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto">
-        <ul className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <li key={item.href}>
-                <Link
-                  href={item.href}
-                  className={cn(
-                    'relative flex items-center gap-3 px-4 py-3 rounded-xl',
-                    'font-medium transition-all duration-200',
-                    'group',
-                    isActive
-                      ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
-                      : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800'
-                  )}
-                >
-                  <item.icon className={cn(
-                    'w-5 h-5 transition-transform duration-200',
-                    'group-hover:scale-110'
-                  )} />
-                  <span>{item.label}</span>
-                  {isActive && (
-                    <motion.div
-                      layoutId="activeNav"
-                      className="absolute left-0 w-1 h-8 bg-primary-500 rounded-r-full"
-                      transition={{ type: 'spring', stiffness: 500, damping: 35 }}
-                    />
-                  )}
-                </Link>
-              </li>
-            );
-          })}
-        </ul>
+      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-6">
+        {(['PRINCIPAL', 'PLANIFICACIÓN', 'ANÁLISIS', 'CUENTA'] as const).map((section) => {
+          const sectionItems = navItems.filter((item) => item.section === section);
+          if (sectionItems.length === 0) return null;
+
+          return (
+            <div key={section} className="space-y-1">
+              <h4 className="px-4 text-[10px] font-bold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-2">
+                {section}
+              </h4>
+              <ul className="space-y-1">
+                {sectionItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <li key={item.href}>
+                      <Link
+                        href={item.href}
+                        className={cn(
+                          'relative flex items-center gap-3 px-4 py-2.5 rounded-xl',
+                          'font-medium transition-all duration-200',
+                          'group',
+                          isActive
+                            ? 'bg-primary-50 dark:bg-primary-900/20 text-primary-600 dark:text-primary-400'
+                            : 'text-surface-600 dark:text-surface-400 hover:bg-surface-50 dark:hover:bg-surface-800'
+                        )}
+                      >
+                        <item.icon className={cn(
+                          'w-5 h-5 transition-transform duration-200',
+                          'group-hover:scale-110'
+                        )} />
+                        <span>{item.label}</span>
+                        {isActive && (
+                          <motion.div
+                            layoutId="activeNav"
+                            className="absolute left-0 w-1 h-6 bg-primary-500 rounded-r-full"
+                            transition={{ type: 'spring', stiffness: 500, damping: 35 }}
+                          />
+                        )}
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
       </nav>
 
       {/* Theme toggle */}

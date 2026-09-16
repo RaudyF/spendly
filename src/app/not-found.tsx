@@ -23,12 +23,12 @@ export default function NotFound() {
 
           {/* ERROR: REDACTED */}
           <h2 className="text-lg md:text-xl font-bold text-white tracking-[0.2em] uppercase mt-4 mb-6">
-            ERROR: REDACTED
+            ERROR: PÁGINA NO ENCONTRADA
           </h2>
 
           {/* Description */}
           <p className="text-surface-400 leading-relaxed text-base max-w-md mb-8">
-            This page could not be found. It either doesn't exist or was deleted. Or perhaps you don't exist and this webpage couldn't find you.
+            Esta página no pudo ser encontrada. Es posible que no exista o haya sido movida.
           </p>
 
           {/* Back to homepage Link */}
@@ -38,7 +38,7 @@ export default function NotFound() {
             style={{ color: '#DB6251' }}
           >
             <ChevronRight className="w-4 h-4" />
-            Back to homepage
+            Volver al inicio
           </Link>
         </motion.div>
 

@@ -2,7 +2,7 @@ import type { Metadata, Viewport } from 'next';
 import { Montserrat } from 'next/font/google';
 import localFont from 'next/font/local';
 import './globals.css';
-import { DevResetButton } from '@/components/dev-reset-button';
+import { Providers } from "@/components/providers";
 
 const montserrat = Montserrat({
   subsets: ['latin'],
@@ -16,8 +16,6 @@ const bagnard = localFont({
   display: 'swap',
 });
 
-// Dynamically import Providers with ssr: false to prevent hydration and prerender errors
-import { Providers } from "@/components/providers";
 export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
@@ -50,7 +48,7 @@ export default function RootLayout({
 }) {
   return (
     <html lang="es" className={`${montserrat.variable} ${bagnard.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen antialiased font-sans">
+      <body className="min-h-screen antialiased font-sans" suppressHydrationWarning>
         <Providers>
           {children}
         </Providers>

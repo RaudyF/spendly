@@ -206,7 +206,7 @@ export function onAuthStateChange(callback: (user: AuthUser | null) => void): ()
 export async function signInAsDemo(): Promise<AuthUser> {
   const user: AuthUser = {
     id: 'demo_user',
-    email: 'demo@spendly.app',
+    email: 'demo@saldoclaro.app',
     displayName: 'Demo User',
     photoURL: null,
     provider: 'demo',

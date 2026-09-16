@@ -6,7 +6,7 @@ import { RefreshCw, Zap } from 'lucide-react';
 import { Card, Button, Skeleton } from '@/components/ui';
 import { cn } from '@/lib/utils';
 import { generateWeeklyTips } from '@/lib/ai';
-import { fadeInUp, staggerContainer } from './insight-card';
+import { fadeInUp, staggerContainer } from './animations';
 
 // Weekly Tips Section
 export const WeeklyTips: React.FC = () => {
