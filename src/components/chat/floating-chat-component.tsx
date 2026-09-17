@@ -34,6 +34,12 @@ export const FloatingChat: React.FC = () => {
   const profile = useStore((state) => state.profile);
   const budgets = useStore((state) => state.budgets);
 
+  useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener('open-saldo-chat', handleOpenChat);
+    return () => window.removeEventListener('open-saldo-chat', handleOpenChat);
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
@@ -165,7 +171,7 @@ export const FloatingChat: React.FC = () => {
 
   return (
     <>
-      {/* Chat Button - positioned above mobile nav */}
+      {/* Chat Button - positioned above mobile nav (Desktop only) */}
       <AnimatePresence>
         {!isOpen && (
           <motion.button
@@ -176,25 +182,22 @@ export const FloatingChat: React.FC = () => {
             whileTap={{ scale: 0.95 }}
             onClick={() => setIsOpen(true)}
             className={cn(
-              'fixed z-50',
-              'w-12 h-12 sm:w-14 sm:h-14 rounded-full',
+              'fixed z-50 hidden xl:flex',
+              'w-14 h-14 rounded-full',
               'bg-gradient-to-br from-primary-500 to-primary-600',
               'text-white shadow-lg',
-              'flex items-center justify-center',
+              'items-center justify-center',
               'hover:shadow-xl hover:shadow-primary-500/25 transition-shadow',
-              // Mobile: above bottom nav (nav height ~60px + safe area)
-              'bottom-20 right-4',
-              // Desktop: normal position
-              'xl:bottom-6 xl:right-6'
+              'bottom-6 right-6'
             )}
             aria-label="Open chat assistant"
           >
-            <MessageCircle className="w-5 h-5 sm:w-6 sm:h-6" />
+            <MessageCircle className="w-6 h-6" />
           </motion.button>
         )}
       </AnimatePresence>
 
-      {/* Chat Window */}
+      {/* Chat Window (Desktop only or controlled) */}
       <AnimatePresence>
         {isOpen && (
           <motion.div
@@ -203,14 +206,10 @@ export const FloatingChat: React.FC = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'fixed z-50',
-              // Mobile: full width with padding, above bottom nav
-              'bottom-20 left-3 right-3',
-              'h-[60vh] max-h-[500px]',
-              // Desktop: fixed size
-              'xl:bottom-6 xl:right-6 xl:left-auto',
-              'xl:w-[360px] xl:h-[500px]',
-              'flex flex-col',
+              'fixed z-50 hidden xl:flex',
+              'bottom-6 right-6 left-auto',
+              'w-[360px] h-[500px]',
+              'flex-col',
               'bg-white dark:bg-surface-900',
               'border border-surface-200 dark:border-surface-700',
               'shadow-2xl rounded-2xl overflow-hidden'

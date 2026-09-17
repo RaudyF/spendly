@@ -12,7 +12,7 @@ interface HeroProps {
 
 export function Hero({ onGetStarted }: HeroProps) {
   return (
-    <section className="relative min-h-[100svh] md:min-h-0 md:pt-44 md:pb-32 flex flex-col">
+    <section className="relative pt-28 pb-16 md:pt-36 md:pb-24 flex flex-col">
       {/* Background Ripple Effect */}
       <div className="absolute top-0 left-0 right-0 h-[600px] overflow-hidden pointer-events-auto">
         <BackgroundRippleEffect />
@@ -27,9 +27,7 @@ export function Hero({ onGetStarted }: HeroProps) {
       </div>
 
       {/* Hero Content */}
-      <div className="relative z-10 mx-auto max-w-6xl px-6 flex-1 flex flex-col pt-28 pb-8 md:pt-0 md:pb-0 md:block">
-        <div className="flex-1 md:hidden" />
-
+      <div className="relative z-10 mx-auto max-w-6xl px-6">
         <div className="text-center max-w-3xl mx-auto">
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -65,8 +63,6 @@ export function Hero({ onGetStarted }: HeroProps) {
             Conoce exactamente cuánto dinero tienes libre, organiza tus obligaciones y toma el control de tu futuro financiero.
           </motion.p>
         </div>
-
-        <div className="flex-1 md:hidden" />
 
         {/* CTA Buttons */}
         <motion.div

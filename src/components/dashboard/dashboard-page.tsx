@@ -200,7 +200,7 @@ export const Dashboard: React.FC = () => {
         </div>
       ) : null}
 
-      {/* Bottom Row - Responsive grid: 1 col mobile, 2 col tablet, 4 col desktop */}
+      {/* Bottom Row - Dynamic auto-flow distribution without empty gaps */}
       {(() => {
         const obligationsList = (useStore.getState().obligations || []).filter(
           (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
@@ -214,35 +214,73 @@ export const Dashboard: React.FC = () => {
         const hasObligations = obligationsList.length > 0;
         const hasTransactions = expensesList.length > 0;
 
-        // If both obligations and recent transactions are empty, show single compact "Completa tu resumen" card
+        // Collect visible secondary modules
+        const modules: React.ReactNode[] = [];
+        modules.push(<HealthScore key="health" />);
+        if (hasObligations) {
+          modules.push(<ObligationsOverview key="obligations" />);
+        }
+        modules.push(<BudgetOverview key="budget" />);
+        if (hasTransactions) {
+          modules.push(<RecentTransactions key="transactions" />);
+        }
+
+        // If both obligations and recent transactions are empty, show single centered compact "Completa tu resumen" card
         if (!hasObligations && !hasTransactions) {
           return (
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 min-w-0 overflow-hidden">
-              <div className="min-w-0 overflow-hidden">
-                <HealthScore />
-              </div>
-              <div className="min-w-0 overflow-hidden">
-                <BudgetOverview />
-              </div>
-              <div className="xl:col-span-2 min-w-0 overflow-hidden">
-                <Card className="h-full flex flex-col justify-between p-6">
-                  <div>
-                    <h3 className="font-semibold text-surface-900 dark:text-white text-base mb-1">
-                      Completa tu resumen
-                    </h3>
-                    <p className="text-xs text-surface-500 mb-4">
-                      Añade tus obligaciones fijas y movimientos para obtener el control completo de tu quincena.
-                    </p>
-                  </div>
-                  <div className="flex flex-wrap gap-3">
-                    <Button onClick={() => window.location.href = '/obligations'} size="sm">
-                      Añadir Obligación
-                    </Button>
-                    <Button onClick={() => window.location.href = '/expenses'} size="sm" variant="outline">
-                      Añadir Movimiento
-                    </Button>
-                  </div>
-                </Card>
+            <div className="w-full min-w-0 overflow-hidden">
+              <Card className="p-6 flex flex-col justify-between">
+                <div>
+                  <h3 className="font-semibold text-surface-900 dark:text-white text-base mb-1">
+                    Completa tu resumen
+                  </h3>
+                  <p className="text-xs text-surface-500 mb-4">
+                    Añade tus obligaciones fijas y movimientos para obtener el control completo de tu quincena.
+                  </p>
+                </div>
+                <div className="flex flex-wrap gap-3">
+                  <Button onClick={() => window.location.href = '/obligations'} size="sm">
+                    Añadir Obligación
+                  </Button>
+                  <Button onClick={() => window.location.href = '/expenses'} size="sm" variant="outline">
+                    Añadir Movimiento
+                  </Button>
+                </div>
+              </Card>
+            </div>
+          );
+        }
+
+        // Dynamic layout based on number of visible modules (1, 2, 3, or 4)
+        // 1 module: centered
+        // 2 modules: 2 columns equal
+        // 3 modules: 2 top, 1 bottom spanning full width or centered
+        // 4 modules: 2x2 grid on tablet/laptop, 4 cols on xl
+        if (modules.length === 1) {
+          return (
+            <div className="max-w-md mx-auto w-full min-w-0 overflow-hidden">
+              <div className="min-w-0 overflow-hidden">{modules[0]}</div>
+            </div>
+          );
+        }
+
+        if (modules.length === 2) {
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden">
+              {modules.map((mod, idx) => (
+                <div key={idx} className="min-w-0 overflow-hidden">{mod}</div>
+              ))}
+            </div>
+          );
+        }
+
+        if (modules.length === 3) {
+          return (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden">
+              <div className="min-w-0 overflow-hidden">{modules[0]}</div>
+              <div className="min-w-0 overflow-hidden">{modules[1]}</div>
+              <div className="md:col-span-2 max-w-xl mx-w-full w-full min-w-0 overflow-hidden">
+                {modules[2]}
               </div>
             </div>
           );
@@ -250,25 +288,14 @@ export const Dashboard: React.FC = () => {
 
         return (
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 min-w-0 overflow-hidden">
-            <div className="min-w-0 overflow-hidden">
-              <HealthScore />
-            </div>
-            {hasObligations && (
-              <div className="min-w-0 overflow-hidden">
-                <ObligationsOverview />
-              </div>
-            )}
-            <div className="min-w-0 overflow-hidden">
-              <BudgetOverview />
-            </div>
-            {hasTransactions && (
-              <div className="min-w-0 overflow-hidden">
-                <RecentTransactions />
-              </div>
-            )}
+            {modules.map((mod, idx) => (
+              <div key={idx} className="min-w-0 overflow-hidden">{mod}</div>
+            ))}
           </div>
         );
       })()}
+      {/* Spacer visible only below xl to clear bottom nav */}
+      <div className="h-28 xl:hidden" aria-hidden="true" />
     </motion.div>
   );
 };

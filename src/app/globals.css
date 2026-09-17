@@ -220,6 +220,51 @@
   .safe-bottom { padding-bottom: env(safe-area-inset-bottom); }
 }
 
+/* Global Slim Scrollbar Styles */
+@layer base {
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 0.8) transparent; /* Light mode thumb */
+  }
+
+  .dark * {
+    scrollbar-color: rgba(75, 85, 99, 0.6) transparent; /* Dark mode thumb */
+  }
+
+  /* WebKit Scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(203, 213, 225, 0.8); /* soft gray for light mode */
+    border-radius: 9999px;
+  }
+
+  .dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(75, 85, 99, 0.6); /* visible dark gray for dark mode */
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgb(59, 130, 246); /* SaldoClaro blue */
+  }
+
+  /* Hide scrollbar visually on touch devices while maintaining smooth scrolling */
+  @media (pointer: coarse) {
+    * {
+      scrollbar-width: none;
+    }
+    ::-webkit-scrollbar {
+      display: none;
+    }
+  }
+}
+
 .recharts-wrapper { @apply font-sans; }
 .recharts-text { @apply fill-surface-500 dark:fill-surface-400 text-xs font-medium; }
 .recharts-cartesian-grid-horizontal line,

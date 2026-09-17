@@ -14,15 +14,14 @@ interface LayoutProps {
   children: React.ReactNode;
   title?: string;
   showBack?: boolean;
-  backFallbackUrl?: string;
   rightAction?: React.ReactNode;
+  backFallbackUrl?: string;
 }
 
 export const Layout: React.FC<LayoutProps> = ({
   children,
   title,
   showBack,
-  backFallbackUrl,
   rightAction,
 }) => {
   const isOnboarded = useStore((state) => state.isOnboarded);
@@ -109,16 +108,11 @@ export const Layout: React.FC<LayoutProps> = ({
   }
 
   return (
-    <div className="min-h-screen bg-surface-50 dark:bg-surface-950">
+    <div className="min-h-screen bg-surface-50 dark:bg-surface-950 w-full overflow-x-hidden">
       <Sidebar />
-      <MobileHeader
-        title={title}
-        showBack={showBack}
-        backFallbackUrl={backFallbackUrl}
-        rightAction={rightAction}
-      />
-      <main className="lg:pl-72 pb-24 lg:pb-8">
-        <div className="max-w-7xl mx-auto">{children}</div>
+      <MobileHeader title={title} showBack={showBack} rightAction={rightAction} />
+      <main className="xl:pl-64 pb-36 xl:pb-8 w-full min-w-0 safe-bottom">
+        <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 min-w-0">{children}</div>
       </main>
       <MobileNav />
     </div>
@@ -128,4 +122,4 @@ export const Layout: React.FC<LayoutProps> = ({
 // Re-export components
 export { Sidebar } from './sidebar';
 export { MobileNav, MobileHeader } from './mobile-nav';
-export { navItems, navSections } from './nav-items';
+export { navItems } from './nav-items';

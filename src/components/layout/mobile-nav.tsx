@@ -13,6 +13,7 @@ import {
   ChevronLeft,
   LogOut,
   MoreHorizontal,
+  Sparkles,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
@@ -169,6 +170,21 @@ export const MobileNav: React.FC = () => {
               </div>
 
               <div className="pt-4 border-t border-surface-100 dark:border-surface-800 space-y-2">
+                <button
+                  onClick={() => {
+                    setMoreOpen(false);
+                    window.dispatchEvent(new CustomEvent('open-saldo-chat'));
+                  }}
+                  className={cn(
+                    'flex items-center gap-3 w-full px-4 py-3 rounded-xl',
+                    'text-surface-600 dark:text-surface-400',
+                    'hover:bg-surface-50 dark:hover:bg-surface-800',
+                    'transition-colors duration-200 font-medium'
+                  )}
+                >
+                  <Sparkles className="w-5 h-5 text-primary-500" />
+                  <span>Asistente</span>
+                </button>
                 <button
                   onClick={() => setTheme(resolvedTheme === 'dark' ? 'light' : 'dark')}
                   className={cn(
