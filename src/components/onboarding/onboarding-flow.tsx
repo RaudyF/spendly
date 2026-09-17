@@ -54,7 +54,11 @@ export const OnboardingFlow: React.FC<OnboardingFlowProps> = ({ onBack }) => {
       setName(user.displayName || '');
       
       // Check if returning user with completed onboarding
-      if (isOnboarded || (profile?.onboardingCompleted && profile?.monthlyIncome > 0)) {
+      if (isOnboarded) {
+        return; // Already onboarded, page.tsx will redirect.
+      }
+      
+      if (profile?.onboardingCompleted && profile?.monthlyIncome > 0) {
         // Returning user - complete onboarding immediately
         completeOnboarding();
         return;

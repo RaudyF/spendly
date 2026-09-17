@@ -31,7 +31,7 @@ export const Dashboard: React.FC = () => {
 
   if (isLoading) {
     return (
-      <div className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto">
+      <div className="p-4 lg:p-8 pb-32 lg:pb-12 space-y-6 max-w-7xl mx-auto">
         <Skeleton className="h-12 w-64" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[1, 2, 3, 4].map((i) => (
@@ -96,7 +96,7 @@ export const Dashboard: React.FC = () => {
       variants={containerVariants}
       initial="hidden"
       animate="show"
-      className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto pb-24 sm:pb-8"
+      className="p-4 lg:p-8 space-y-6 max-w-7xl mx-auto"
     >
       {/* Header */}
       <motion.div variants={itemVariants} className="flex flex-col sm:flex-row sm:items-end justify-between gap-4">
@@ -137,9 +137,9 @@ export const Dashboard: React.FC = () => {
         currency={currency}
         activePayCycle={activePayCycle}
         currentMonth={currentMonth}
-        pendingSalary={q1Pending + q2Pending}
-        expectedSalary={q1Expected + q2Expected}
-        salaryReceived={q1Received + q2Received}
+        pendingSalary={activePayCycle === 'MONTHLY' ? q1Pending + q2Pending : activePayCycle === 'Q1' ? q1Pending : q2Pending}
+        expectedSalary={activePayCycle === 'MONTHLY' ? q1Expected + q2Expected : activePayCycle === 'Q1' ? q1Expected : q2Expected}
+        salaryReceived={activePayCycle === 'MONTHLY' ? q1Received + q2Received : activePayCycle === 'Q1' ? q1Received : q2Received}
         onConfirmSalary={handleConfirmSalary}
         onConfirmBoth={handleConfirmBoth}
       />
@@ -190,11 +190,11 @@ export const Dashboard: React.FC = () => {
 
       {/* Conditional Charts Row - Only show when there are expenses */}
       {totalExpenses > 0 ? (
-        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0 overflow-hidden">
-          <div className="xl:col-span-7 min-w-0 overflow-hidden">
+        <div className="grid grid-cols-1 xl:grid-cols-12 gap-6 min-w-0 overflow-hidden items-stretch">
+          <div className="xl:col-span-7 h-full min-w-0 overflow-hidden">
             <SpendingTrend />
           </div>
-          <div className="xl:col-span-5 min-w-0 overflow-hidden">
+          <div className="xl:col-span-5 h-full min-w-0 overflow-hidden">
             <CategoryDonut />
           </div>
         </div>
@@ -220,34 +220,35 @@ export const Dashboard: React.FC = () => {
         if (hasObligations) {
           modules.push(<ObligationsOverview key="obligations" />);
         }
-        modules.push(<BudgetOverview key="budget" />);
+        const hasBudgets = (useStore.getState().budgets || []).some((b) => b.month === currentMonth);
+        if (hasBudgets) {
+          modules.push(<BudgetOverview key="budget" />);
+        }
         if (hasTransactions) {
           modules.push(<RecentTransactions key="transactions" />);
         }
 
         // If both obligations and recent transactions are empty, show single centered compact "Completa tu resumen" card
         if (!hasObligations && !hasTransactions) {
-          return (
-            <div className="w-full min-w-0 overflow-hidden">
-              <Card className="p-6 flex flex-col justify-between">
-                <div>
-                  <h3 className="font-semibold text-surface-900 dark:text-white text-base mb-1">
-                    Completa tu resumen
-                  </h3>
-                  <p className="text-xs text-surface-500 mb-4">
-                    Añade tus obligaciones fijas y movimientos para obtener el control completo de tu quincena.
-                  </p>
-                </div>
-                <div className="flex flex-wrap gap-3">
-                  <Button onClick={() => window.location.href = '/obligations'} size="sm">
-                    Añadir Obligación
-                  </Button>
-                  <Button onClick={() => window.location.href = '/expenses'} size="sm" variant="outline">
-                    Añadir Movimiento
-                  </Button>
-                </div>
-              </Card>
-            </div>
+          modules.push(
+            <Card key="completa-resumen" className="p-6 flex flex-col justify-between w-full">
+              <div>
+                <h3 className="font-semibold text-surface-900 dark:text-white text-base mb-1">
+                  Completa tu resumen
+                </h3>
+                <p className="text-xs text-surface-500 mb-4">
+                  Añade tus obligaciones fijas y movimientos para obtener el control completo de tu quincena.
+                </p>
+              </div>
+              <div className="flex flex-wrap gap-3 mt-auto">
+                <Button onClick={() => window.location.href = '/obligations'} size="sm">
+                  Añadir Obligación
+                </Button>
+                <Button onClick={() => window.location.href = '/expenses'} size="sm" variant="outline">
+                  Añadir Movimiento
+                </Button>
+              </div>
+            </Card>
           );
         }
 
@@ -266,9 +267,9 @@ export const Dashboard: React.FC = () => {
 
         if (modules.length === 2) {
           return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-stretch max-w-4xl mx-auto w-full min-w-0 overflow-hidden">
               {modules.map((mod, idx) => (
-                <div key={idx} className="min-w-0 overflow-hidden">{mod}</div>
+                <div key={idx} className="h-full min-w-0 overflow-hidden">{mod}</div>
               ))}
             </div>
           );
@@ -276,10 +277,10 @@ export const Dashboard: React.FC = () => {
 
         if (modules.length === 3) {
           return (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 max-w-4xl mx-auto w-full min-w-0 overflow-hidden">
-              <div className="min-w-0 overflow-hidden">{modules[0]}</div>
-              <div className="min-w-0 overflow-hidden">{modules[1]}</div>
-              <div className="md:col-span-2 max-w-xl mx-w-full w-full min-w-0 overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-stretch w-full min-w-0 overflow-hidden">
+              <div className="h-full min-w-0 overflow-hidden">{modules[0]}</div>
+              <div className="h-full min-w-0 overflow-hidden">{modules[1]}</div>
+              <div className="col-span-1 md:col-span-2 w-full h-full min-w-0 overflow-hidden">
                 {modules[2]}
               </div>
             </div>
@@ -287,15 +288,13 @@ export const Dashboard: React.FC = () => {
         }
 
         return (
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 sm:gap-6 min-w-0 overflow-hidden">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 items-stretch min-w-0 overflow-hidden">
             {modules.map((mod, idx) => (
-              <div key={idx} className="min-w-0 overflow-hidden">{mod}</div>
+              <div key={idx} className="h-full min-w-0 overflow-hidden">{mod}</div>
             ))}
           </div>
         );
       })()}
-      {/* Spacer visible only below xl to clear bottom nav */}
-      <div className="h-28 xl:hidden" aria-hidden="true" />
     </motion.div>
   );
 };

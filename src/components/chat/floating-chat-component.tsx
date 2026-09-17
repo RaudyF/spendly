@@ -206,13 +206,13 @@ export const FloatingChat: React.FC = () => {
             exit={{ opacity: 0, y: 20, scale: 0.95 }}
             transition={{ duration: 0.2 }}
             className={cn(
-              'fixed z-50 hidden xl:flex',
-              'bottom-6 right-6 left-auto',
-              'w-[360px] h-[500px]',
+              'fixed z-50 flex',
+              'inset-0 xl:inset-auto xl:bottom-6 xl:right-6',
+              'w-full h-full xl:w-[360px] xl:h-[500px]',
               'flex-col',
               'bg-white dark:bg-surface-900',
-              'border border-surface-200 dark:border-surface-700',
-              'shadow-2xl rounded-2xl overflow-hidden'
+              'xl:border border-surface-200 dark:border-surface-700',
+              'shadow-2xl xl:rounded-2xl overflow-hidden'
             )}
           >
             {/* Header */}

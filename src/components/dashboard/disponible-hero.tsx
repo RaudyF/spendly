@@ -76,8 +76,7 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
     dayProgressText = `Día ${clampedDay} de ${daysInMonth} · ${remainingDays} días restantes`;
   }
 
-  const dailyBudget =
-    freeAvailable > 0 && remainingDays > 0 ? freeAvailable / remainingDays : 0;
+  
 
   const isHealthy = freeAvailable >= 0;
 
@@ -89,10 +88,7 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
       {/* Top Meta Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4 lg:mb-6">
         <div className="flex items-center gap-2">
-          <span className="text-xs font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500">
-            Foco de Decisión
-          </span>
-          <span className="text-surface-300 dark:text-surface-600">·</span>
+          
           <span
             className={cn(
               'text-xs px-2.5 py-0.5 rounded-full font-medium inline-flex items-center gap-1.5',
@@ -149,95 +145,6 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
           <p className="text-xs lg:text-sm text-surface-500 dark:text-surface-400 mt-2">
             Dinero real confirmado tras reservar todas tus obligaciones fijas y descontar gastos del período.
           </p>
-        </div>
-
-        {/* Daily Spending Pace Card */}
-        <div className="lg:col-span-5 bg-surface-50 dark:bg-surface-700/40 border border-surface-100 dark:border-surface-700/60 p-4 rounded-xl">
-          <div className="flex items-center justify-between mb-1.5">
-            <span className="text-xs font-medium text-surface-500 dark:text-surface-400 flex items-center gap-1.5">
-              <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-              Ritmo de gasto sugerido
-            </span>
-            <span className="text-[11px] text-surface-400 font-medium">
-              {remainingDays} {remainingDays === 1 ? 'día' : 'días'}
-            </span>
-          </div>
-
-          <div className="flex items-baseline gap-2">
-            <span className="text-xl lg:text-2xl font-bold text-surface-900 dark:text-white">
-              {isHealthy
-                ? `${formatCurrency(dailyBudget, currency)}`
-                : `${formatCurrency(0, currency)}`}
-            </span>
-            <span className="text-xs text-surface-500 dark:text-surface-400">/ día</span>
-          </div>
-
-          <p className="text-[11px] text-surface-400 dark:text-surface-400 mt-1 leading-relaxed">
-            {isHealthy
-              ? 'Gasto máximo diario para llegar con balance positivo al cierre del ciclo.'
-              : 'Detén consumos no esenciales para restaurar el balance de la quincena.'}
-          </p>
-        </div>
-      </div>
-
-      {/* SaldoClaro Mathematical Equation Breakdown */}
-      <div className="mt-6 pt-5 border-t border-surface-100 dark:border-surface-700/80">
-        <p className="text-[11px] font-semibold uppercase tracking-wider text-surface-400 dark:text-surface-500 mb-3">
-          Desglose de la ecuación quincenal
-        </p>
-
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 lg:gap-3">
-          {/* Incomes */}
-          <div className="p-3 rounded-xl bg-surface-50/80 dark:bg-surface-700/30 border border-surface-100 dark:border-surface-700/40">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-medium text-surface-500 dark:text-surface-400">
-                + Ingresos Reales
-              </span>
-              <span className="w-2 h-2 rounded-full bg-green-500" />
-            </div>
-            <p className="text-sm lg:text-base font-bold text-green-600 dark:text-green-400 truncate">
-              {formatCurrency(receivedIncome, currency)}
-            </p>
-          </div>
-
-          {/* Obligations */}
-          <div className="p-3 rounded-xl bg-surface-50/80 dark:bg-surface-700/30 border border-surface-100 dark:border-surface-700/40">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-medium text-surface-500 dark:text-surface-400">
-                - Obligaciones Fijas
-              </span>
-              <span className="w-2 h-2 rounded-full bg-indigo-500" />
-            </div>
-            <p className="text-sm lg:text-base font-bold text-indigo-600 dark:text-indigo-400 truncate">
-              {formatCurrency(committed, currency)}
-            </p>
-          </div>
-
-          {/* Expenses */}
-          <div className="p-3 rounded-xl bg-surface-50/80 dark:bg-surface-700/30 border border-surface-100 dark:border-surface-700/40">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-medium text-surface-500 dark:text-surface-400">
-                - Gastos Realizados
-              </span>
-              <span className="w-2 h-2 rounded-full bg-red-500" />
-            </div>
-            <p className="text-sm lg:text-base font-bold text-red-600 dark:text-red-400 truncate">
-              {formatCurrency(totalExpenses, currency)}
-            </p>
-          </div>
-
-          {/* Result */}
-          <div className="p-3 rounded-xl bg-primary-50/50 dark:bg-primary-950/20 border border-primary-100 dark:border-primary-900/40">
-            <div className="flex items-center justify-between mb-1">
-              <span className="text-[11px] font-semibold text-primary-600 dark:text-primary-400">
-                = Disponible Libre
-              </span>
-              <span className="w-2 h-2 rounded-full bg-primary-500" />
-            </div>
-            <p className="text-sm lg:text-base font-bold text-primary-600 dark:text-primary-400 truncate">
-              {formatCurrency(freeAvailable, currency)}
-            </p>
-          </div>
         </div>
       </div>
 

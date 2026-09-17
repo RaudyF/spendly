@@ -111,7 +111,7 @@ export const Layout: React.FC<LayoutProps> = ({
     <div className="min-h-screen bg-surface-50 dark:bg-surface-950 w-full overflow-x-hidden">
       <Sidebar />
       <MobileHeader title={title} showBack={showBack} rightAction={rightAction} />
-      <main className="xl:pl-64 pb-36 xl:pb-8 w-full min-w-0 safe-bottom">
+      <main className="xl:pl-64 pb-36 xl:pb-8 w-full min-w-0">
         <div className="max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 min-w-0">{children}</div>
       </main>
       <MobileNav />

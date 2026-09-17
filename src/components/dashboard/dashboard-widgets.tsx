@@ -29,7 +29,7 @@ export const RecentTransactions: React.FC = () => {
     .slice(0, 5);
 
   return (
-    <motion.div variants={itemVariants}>
+    <motion.div variants={itemVariants} className="h-full">
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
@@ -115,7 +115,7 @@ export const BudgetOverview: React.FC = () => {
     .slice(0, 4);
 
   return (
-    <motion.div variants={itemVariants}>
+    <motion.div variants={itemVariants} className="h-full">
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
@@ -200,7 +200,7 @@ export const ObligationsOverview: React.FC = () => {
     .slice(0, 4);
 
   return (
-    <motion.div variants={itemVariants}>
+    <motion.div variants={itemVariants} className="h-full">
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">

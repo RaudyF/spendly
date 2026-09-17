@@ -14,7 +14,7 @@ interface LandingPageProps {
 
 export function LandingPage({ onGetStarted }: LandingPageProps) {
   return (
-    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0c0c0b] overflow-hidden">
+    <div className="min-h-screen bg-[#fafaf9] dark:bg-[#0c0c0b]">
       <Navbar onGetStarted={onGetStarted} />
       <Hero onGetStarted={onGetStarted} />
       <Features />

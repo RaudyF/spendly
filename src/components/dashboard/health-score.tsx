@@ -43,7 +43,7 @@ export const HealthScore: React.FC = () => {
   const config = statusConfig[status];
 
   return (
-    <motion.div variants={itemVariants}>
+    <motion.div variants={itemVariants} className="h-full">
       <Card className="h-full">
         <div className="flex items-center justify-between mb-4 sm:mb-5">
           <h3 className="font-semibold text-surface-900 dark:text-white text-sm sm:text-base">
@@ -94,7 +94,7 @@ export const HealthScore: React.FC = () => {
 
           <div className="flex-1 min-w-0">
             <p className="text-xs sm:text-sm text-surface-500 mb-3 sm:mb-4 leading-relaxed">
-              Basado en tus ingresos, gastos y metas.
+              Indicador estimado de tu bienestar financiero basado en nivel de ahorro, gastos fijos y control de presupuesto.
             </p>
             <Link
               href="/insights"

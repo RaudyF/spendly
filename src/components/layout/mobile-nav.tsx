@@ -167,6 +167,19 @@ export const MobileNav: React.FC = () => {
                       </Link>
                     );
                   })}
+                <button
+                  onClick={() => {
+                    setMoreOpen(false);
+                    window.dispatchEvent(new CustomEvent('open-saldo-chat'));
+                  }}
+                  className={cn(
+                    'flex flex-col items-center gap-2 p-4 rounded-2xl border transition-all duration-200 text-center',
+                    'bg-surface-50 dark:bg-surface-800/50 border-surface-100 dark:border-surface-800 text-surface-700 dark:text-surface-300 hover:bg-surface-100'
+                  )}
+                >
+                  <Sparkles className="w-6 h-6 text-primary-500" />
+                  <span className="text-sm font-semibold">Asistente</span>
+                </button>
               </div>
 
               <div className="pt-4 border-t border-surface-100 dark:border-surface-800 space-y-2">
@@ -243,7 +256,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
     <>
       <header
         className={cn(
-          'lg:hidden sticky top-0 z-30',
+          'xl:hidden sticky top-0 z-30',
           'bg-white/90 dark:bg-surface-900/90 backdrop-blur-xl',
           'border-b border-surface-100 dark:border-surface-800',
           'safe-top'
@@ -287,7 +300,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="lg:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+            className="xl:hidden fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
             onClick={() => setMenuOpen(false)}
           >
             <motion.div

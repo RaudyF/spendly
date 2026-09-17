@@ -47,8 +47,8 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="es" className={`${montserrat.variable} ${bagnard.variable}`} suppressHydrationWarning>
-      <body className="min-h-screen antialiased font-sans" suppressHydrationWarning>
+    <html lang="es" className={`${montserrat.variable} ${bagnard.variable}`}>
+      <body className="min-h-screen antialiased font-sans">
         <Providers>
           {children}
         </Providers>
