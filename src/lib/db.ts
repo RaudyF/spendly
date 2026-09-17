@@ -1,10 +1,10 @@
 // IndexedDB storage for offline-first approach
 // This provides persistent storage that works in the browser
 
-import { Expense, Income, Budget, Obligation, SavingsGoal, UserProfile, AIInsight } from '@/types';
+import { Expense, Income, Budget, Obligation, SavingsGoal, UserProfile, AIInsight, PeriodState, PeriodRollover } from '@/types';
 
 const DB_NAME_PREFIX = 'smart_budget_db';
-const DB_VERSION = 2; // Incremented to v2 to add 'obligations' store
+const DB_VERSION = 6; // v6: add syncQueue store for offline-first pending changes
 
 // Get user-specific database name
 function getDbName(userId?: string): string {
@@ -14,7 +14,37 @@ function getDbName(userId?: string): string {
   return DB_NAME_PREFIX;
 }
 
-type StoreName = 'expenses' | 'incomes' | 'budgets' | 'obligations' | 'goals' | 'profile' | 'insights';
+export type StoreName =
+  | 'expenses'
+  | 'incomes'
+  | 'budgets'
+  | 'obligations'
+  | 'recurringObligations'
+  | 'goals'
+  | 'profile'
+  | 'insights'
+  | 'periodStates'
+  | 'periodRollovers'
+  | 'syncQueue';
+
+export interface PendingChange {
+  id: string;
+  entityType:
+    | 'expense'
+    | 'income'
+    | 'budget'
+    | 'obligation'
+    | 'recurringObligation'
+    | 'goal'
+    | 'profile'
+    | 'periodState'
+    | 'periodRollover';
+  action: 'create' | 'update' | 'delete';
+  entityId: string;
+  payload?: any;
+  timestamp: string;
+  retryCount: number;
+}
 
 interface StoreConfig {
   name: StoreName;
@@ -50,7 +80,14 @@ const stores: StoreConfig[] = [
     indexes: [
       { name: 'payCycle', keyPath: 'payCycle', unique: false },
       { name: 'category', keyPath: 'category', unique: false },
+      { name: 'period', keyPath: 'period', unique: false },
+      { name: 'idempotencyKey', keyPath: 'idempotencyKey', unique: false },
+      { name: 'templateId', keyPath: 'templateId', unique: false },
     ],
+  },
+  {
+    name: 'recurringObligations',
+    keyPath: 'id',
   },
   {
     name: 'goals',
@@ -66,6 +103,33 @@ const stores: StoreConfig[] = [
     indexes: [
       { name: 'type', keyPath: 'type', unique: false },
       { name: 'createdAt', keyPath: 'createdAt', unique: false },
+    ],
+  },
+  {
+    name: 'periodStates',
+    keyPath: 'id',
+    indexes: [
+      { name: 'period', keyPath: 'period', unique: false },
+      { name: 'cycle', keyPath: 'cycle', unique: false },
+      { name: 'status', keyPath: 'status', unique: false },
+    ],
+  },
+  {
+    name: 'periodRollovers',
+    keyPath: 'id',
+    indexes: [
+      { name: 'sourcePeriod', keyPath: 'sourcePeriod', unique: false },
+      { name: 'destinationPeriod', keyPath: 'destinationPeriod', unique: false },
+      { name: 'status', keyPath: 'status', unique: false },
+      { name: 'idempotencyKey', keyPath: 'idempotencyKey', unique: false },
+    ],
+  },
+  {
+    name: 'syncQueue',
+    keyPath: 'id',
+    indexes: [
+      { name: 'timestamp', keyPath: 'timestamp', unique: false },
+      { name: 'entityType', keyPath: 'entityType', unique: false },
     ],
   },
 ];
@@ -97,19 +161,27 @@ class Database {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result;
+        const transaction = (event.target as IDBOpenDBRequest).transaction;
 
         stores.forEach((store) => {
+          let objectStore: IDBObjectStore;
           if (!db.objectStoreNames.contains(store.name)) {
-            const objectStore = db.createObjectStore(store.name, {
+            objectStore = db.createObjectStore(store.name, {
               keyPath: store.keyPath,
             });
+          } else if (transaction) {
+            objectStore = transaction.objectStore(store.name);
+          } else {
+            return;
+          }
 
-            store.indexes?.forEach((index) => {
+          store.indexes?.forEach((index) => {
+            if (!objectStore.indexNames.contains(index.name)) {
               objectStore.createIndex(index.name, index.keyPath, {
                 unique: index.unique,
               });
-            });
-          }
+            }
+          });
         });
       };
     });
@@ -233,6 +305,15 @@ export const obligationsDB = {
   clear: () => db.clear('obligations'),
 };
 
+export const recurringObligationsDB = {
+  getAll: () => db.getAll<import('@/types').RecurringObligation>('recurringObligations'),
+  get: (id: string) => db.get<import('@/types').RecurringObligation>('recurringObligations', id),
+  add: (obligation: import('@/types').RecurringObligation) => db.add<import('@/types').RecurringObligation>('recurringObligations', obligation),
+  update: (obligation: import('@/types').RecurringObligation) => db.put<import('@/types').RecurringObligation>('recurringObligations', obligation),
+  delete: (id: string) => db.delete('recurringObligations', id),
+  clear: () => db.clear('recurringObligations'),
+};
+
 export const goalsDB = {
   getAll: () => db.getAll<SavingsGoal>('goals'),
   get: (id: string) => db.get<SavingsGoal>('goals', id),
@@ -258,3 +339,31 @@ export const insightsDB = {
   delete: (id: string) => db.delete('insights', id),
   clear: () => db.clear('insights'),
 };
+
+export const periodStatesDB = {
+  getAll: () => db.getAll<PeriodState>('periodStates'),
+  get: (id: string) => db.get<PeriodState>('periodStates', id),
+  add: (state: PeriodState) => db.add<PeriodState>('periodStates', state),
+  update: (state: PeriodState) => db.put<PeriodState>('periodStates', state),
+  delete: (id: string) => db.delete('periodStates', id),
+  clear: () => db.clear('periodStates'),
+};
+
+export const periodRolloversDB = {
+  getAll: () => db.getAll<PeriodRollover>('periodRollovers'),
+  get: (id: string) => db.get<PeriodRollover>('periodRollovers', id),
+  add: (rollover: PeriodRollover) => db.add<PeriodRollover>('periodRollovers', rollover),
+  update: (rollover: PeriodRollover) => db.put<PeriodRollover>('periodRollovers', rollover),
+  delete: (id: string) => db.delete('periodRollovers', id),
+  clear: () => db.clear('periodRollovers'),
+};
+
+export const syncQueueDB = {
+  getAll: () => db.getAll<PendingChange>('syncQueue'),
+  get: (id: string) => db.get<PendingChange>('syncQueue', id),
+  add: (change: PendingChange) => db.add<PendingChange>('syncQueue', change),
+  update: (change: PendingChange) => db.put<PendingChange>('syncQueue', change),
+  delete: (id: string) => db.delete('syncQueue', id),
+  clear: () => db.clear('syncQueue'),
+};
+

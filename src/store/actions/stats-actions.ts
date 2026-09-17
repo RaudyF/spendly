@@ -3,7 +3,10 @@ import { budgetsDB, insightsDB } from '@/lib/db';
 import { getPayCycleFromDate, generateId } from '@/lib/utils';
 import { CATEGORIES } from '@/lib/constants';
 import { generateLocalInsights, calculateFinancialHealth } from '@/lib/ai';
+import { getObligationRemainingAmount } from '@/lib/obligations';
 import { StoreSet, StoreGet } from '../types';
+
+export const getObligationRemaining = getObligationRemainingAmount;
 
 export function isSalaryIncome(i: Income): boolean {
   if (i.type === 'salary') return true;
@@ -27,17 +30,14 @@ export function getSalaryQuotas(profile: UserProfile | null) {
   let monthQuota = 0;
 
   if (freq === 'monthly') {
-    // Si la frecuencia es mensual (ej. RD$35,000), se divide equitativamente: Q1: 17,500, Q2: 17,500, Mes: 35,000
     q1Quota = Math.round((monthlyIncome / 2) * 100) / 100;
     q2Quota = Math.round((monthlyIncome - q1Quota) * 100) / 100;
     monthQuota = monthlyIncome;
   } else if (freq === 'biweekly') {
-    // Si la frecuencia es quincenal (ej. RD$17,500 por quincena): Q1: 17,500, Q2: 17,500, Mes: 35,000
     q1Quota = monthlyIncome;
     q2Quota = monthlyIncome;
     monthQuota = monthlyIncome * 2;
   } else {
-    // Variable: sin cuota fija esperada
     q1Quota = 0;
     q2Quota = 0;
     monthQuota = 0;
@@ -49,22 +49,24 @@ export function getSalaryQuotas(profile: UserProfile | null) {
 export function computeIncomeAndAvailability({
   incomes,
   profile,
-  currentMonth,
+  viewingPeriod,
   activePayCycle,
   totalExpenses,
   committed,
+  initialBalance = 0,
 }: {
   incomes: Income[];
   profile: UserProfile | null;
-  currentMonth: string;
+  viewingPeriod: string;
   activePayCycle: PayCycle;
   totalExpenses: number;
   committed: number;
+  initialBalance?: number;
 }) {
   const { q1Quota, q2Quota, monthQuota, freq } = getSalaryQuotas(profile);
 
   // Filtrar todos los ingresos del mes actual
-  const allMonthIncomes = incomes.filter((i) => i.date.startsWith(currentMonth));
+  const allMonthIncomes = incomes.filter((i) => i.date.startsWith(viewingPeriod));
 
   // Agrupar por ciclo
   const q1Incomes = allMonthIncomes.filter(
@@ -86,7 +88,7 @@ export function computeIncomeAndAvailability({
   const q2Received = q2Salary + q2Additional;
   const q2Pending = freq === 'variable' ? 0 : Math.max(0, q2Quota - q2Salary);
 
-  // Totales del mes completo (estrictamente ingresos reales recibidos)
+  // Totales del mes completo
   const monthSalary = q1Salary + q2Salary;
   const monthAdditional = q1Additional + q2Additional;
   const monthReceived = monthSalary + monthAdditional;
@@ -115,7 +117,6 @@ export function computeIncomeAndAvailability({
     pendingSalary = q2Pending;
     expectedIncome = freq === 'variable' ? receivedIncome : q2Quota + q2Additional;
   } else {
-    // MONTHLY
     salaryReceived = monthSalary;
     additionalReceived = monthAdditional;
     receivedIncome = monthReceived;
@@ -124,11 +125,11 @@ export function computeIncomeAndAvailability({
     expectedIncome = freq === 'variable' ? receivedIncome : monthQuota + monthAdditional;
   }
 
-  // Disponible libre real se calcula ÚNICAMENTE con dinero realmente recibido
-  const realFreeAvailable = receivedIncome - totalExpenses - committed;
+  // Disponible libre real se calcula con dinero realmente recibido + balance inicial por arrastre
+  const realFreeAvailable = receivedIncome + initialBalance - totalExpenses - committed;
 
-  // Disponible proyectado incluye el ingreso esperado
-  const projectedFreeAvailable = expectedIncome - totalExpenses - committed;
+  // Disponible proyectado incluye el ingreso esperado + balance inicial
+  const projectedFreeAvailable = expectedIncome + initialBalance - totalExpenses - committed;
 
   return {
     salaryReceived,
@@ -137,6 +138,7 @@ export function computeIncomeAndAvailability({
     baseSalaryExpected,
     pendingSalary,
     expectedIncome,
+    initialBalance,
     realFreeAvailable,
     projectedFreeAvailable,
     q1BaseStats: {
@@ -158,57 +160,90 @@ export function computeIncomeAndAvailability({
 
 export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
   refreshInsights: () => {
-    const { expenses, incomes, obligations, profile, currentMonth, activePayCycle } = get();
+    const { expenses, incomes, obligations, profile, viewingPeriod, activePayCycle } = get();
 
-    // Filter expenses for current month and active cycle
+    // Filtrar gastos por período financiero y ciclo activo
     const monthExpenses = expenses.filter((e) => {
-      if (!e.date.startsWith(currentMonth)) return false;
+      if (e.status === 'reverted') return false;
+      const expensePeriod = e.financialPeriod || e.date.slice(0, 7);
+      if (expensePeriod !== viewingPeriod) return false;
       if (activePayCycle === 'MONTHLY') return true;
-      return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
+      const cycle = e.payCycle || getPayCycleFromDate(e.date);
+      return cycle === activePayCycle;
     });
 
-    // Calculate category totals
-    const activeObligations = obligations.filter(
-      (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
-    );
-    const committed = activeObligations.filter((o) => !o.isPaid).reduce((sum, o) => sum + o.amount, 0);
+    const activeObligations = obligations.filter((o) => {
+      const obligationPeriod = o.period || (o.dueDate || o.createdAt).slice(0, 7);
+      if (obligationPeriod !== viewingPeriod) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return o.payCycle === activePayCycle;
+    });
+    const committed = activeObligations.reduce((sum, o) => sum + getObligationRemainingAmount(o, expenses), 0);
 
-    const byCategory: Record<CategoryType, number> = {} as Record<
-      CategoryType,
-      number
-    >;
+    const byCategory: Record<CategoryType, number> = {} as Record<CategoryType, number>;
     CATEGORIES.forEach((cat) => {
       byCategory[cat.id] = 0;
     });
 
     monthExpenses.forEach((expense) => {
-      byCategory[expense.category] =
-        (byCategory[expense.category] || 0) + expense.amount;
+      byCategory[expense.category] = (byCategory[expense.category] || 0) + expense.amount;
     });
 
     const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
     const q1Expenses = expenses
-      .filter((e) => e.date.startsWith(currentMonth) && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q1')
+      .filter((e) => e.status !== 'reverted' && (e.financialPeriod || e.date.slice(0, 7)) === viewingPeriod && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q1')
       .reduce((sum, e) => sum + e.amount, 0);
     const q2Expenses = expenses
-      .filter((e) => e.date.startsWith(currentMonth) && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q2')
+      .filter((e) => e.status !== 'reverted' && (e.financialPeriod || e.date.slice(0, 7)) === viewingPeriod && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q2')
       .reduce((sum, e) => sum + e.amount, 0);
 
     const q1Committed = obligations
-      .filter((o) => !o.isPaid && o.payCycle === 'Q1')
-      .reduce((sum, o) => sum + o.amount, 0);
+      .filter((o) => (o.period || (o.dueDate || o.createdAt).slice(0, 7)) === viewingPeriod && o.payCycle === 'Q1')
+      .reduce((sum, o) => sum + getObligationRemainingAmount(o, expenses), 0);
     const q2Committed = obligations
-      .filter((o) => !o.isPaid && o.payCycle === 'Q2')
-      .reduce((sum, o) => sum + o.amount, 0);
+      .filter((o) => (o.period || (o.dueDate || o.createdAt).slice(0, 7)) === viewingPeriod && o.payCycle === 'Q2')
+      .reduce((sum, o) => sum + getObligationRemainingAmount(o, expenses), 0);
+
+    const { periodRollovers } = get();
+    let initialBalance = 0;
+    if (activePayCycle === 'MONTHLY') {
+      initialBalance = periodRollovers
+        .filter(
+          (ro) =>
+            ro.destinationPeriod === viewingPeriod &&
+            ro.sourcePeriod !== viewingPeriod &&
+            ro.status === 'applied'
+        )
+        .reduce((sum, ro) => sum + ro.amount, 0);
+    } else if (activePayCycle === 'Q1') {
+      initialBalance = periodRollovers
+        .filter(
+          (ro) =>
+            ro.destinationPeriod === viewingPeriod &&
+            (ro.destinationCycle === 'Q1' || (ro.destinationCycle === 'MONTHLY' && ro.sourcePeriod !== viewingPeriod)) &&
+            ro.status === 'applied'
+        )
+        .reduce((sum, ro) => sum + ro.amount, 0);
+    } else {
+      initialBalance = periodRollovers
+        .filter(
+          (ro) =>
+            ro.destinationPeriod === viewingPeriod &&
+            ro.destinationCycle === 'Q2' &&
+            ro.status === 'applied'
+        )
+        .reduce((sum, ro) => sum + ro.amount, 0);
+    }
 
     const incomeCalc = computeIncomeAndAvailability({
       incomes,
       profile,
-      currentMonth,
+      viewingPeriod,
       activePayCycle,
       totalExpenses,
       committed,
+      initialBalance,
     });
 
     const q1Stats = {
@@ -235,8 +270,8 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
       freeAvailable: incomeCalc.q2BaseStats.receivedIncome - q2Expenses - q2Committed,
     };
 
-    const stats: MonthlyStats = {
-      month: currentMonth,
+    const currentStats: MonthlyStats = {
+      month: viewingPeriod,
       payCycle: activePayCycle,
       totalIncome: incomeCalc.receivedIncome,
       receivedIncome: incomeCalc.receivedIncome,
@@ -255,90 +290,123 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
       q2Stats,
     };
 
-    // Generate insights
     const insightTexts = generateLocalInsights(
-      stats,
+      currentStats,
       monthExpenses,
-      profile?.currency || 'USD'
+      profile?.currency || 'RD$'
     );
 
-    const newInsights: AIInsight[] = insightTexts.map((text, index) => ({
+    const newInsights: AIInsight[] = insightTexts.map((text) => ({
       id: generateId(),
-      type: index === 0 ? 'tip' : 'pattern',
-      title: text.split('.')[0] || 'Insight',
+      type: 'tip',
+      title: 'Consejo Financiero',
       description: text,
       createdAt: new Date().toISOString(),
       isRead: false,
-      priority: index === 0 ? 'high' : 'medium',
+      priority: 'medium',
     }));
 
-    set({ insights: newInsights });
+    newInsights.forEach((insight) => {
+      insightsDB.add(insight).catch(console.error);
+    });
+
+    set({
+      insights: newInsights,
+      monthlyStats: currentStats,
+    });
   },
 
   dismissInsight: async (id: string) => {
-    const insight = get().insights.find((i) => i.id === id);
-    if (insight) {
-      const updated = { ...insight, isRead: true };
-      await insightsDB.update(updated);
-      set((state) => ({
-        insights: state.insights.map((i) => (i.id === id ? updated : i)),
-      }));
+    set((state) => ({
+      insights: state.insights.map((i) =>
+        i.id === id ? { ...i, isDismissed: true } : i
+      ),
+    }));
+
+    try {
+      const insight = get().insights.find((i) => i.id === id);
+      if (insight) {
+        await insightsDB.update(insight);
+      }
+    } catch (error) {
+      console.error('Failed to dismiss insight in DB:', error);
     }
   },
 
   recalculateStats: () => {
-    const { expenses, incomes, obligations, budgets, goals, profile, currentMonth, activePayCycle } = get();
+    const { expenses, incomes, obligations, budgets, goals, periodRollovers, profile, viewingPeriod, activePayCycle } = get();
 
-    // Filter for current month and active cycle
+    // Filtrar gastos por período financiero y ciclo activo
     const monthExpenses = expenses.filter((e) => {
-      if (!e.date.startsWith(currentMonth)) return false;
+      if (e.status === 'reverted') return false;
+      const expensePeriod = e.financialPeriod || e.date.slice(0, 7);
+      if (expensePeriod !== viewingPeriod) return false;
       if (activePayCycle === 'MONTHLY') return true;
-      return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
+      const cycle = e.payCycle || getPayCycleFromDate(e.date);
+      return cycle === activePayCycle;
     });
 
-    // Calculate totals
     const totalExpenses = monthExpenses.reduce((sum, e) => sum + e.amount, 0);
 
-    // Calculate by category
-    const activeObligations = obligations.filter(
-      (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
-    );
-    const committed = activeObligations.filter((o) => !o.isPaid).reduce((sum, o) => sum + o.amount, 0);
+    const activeObligations = obligations.filter((o) => {
+      const obligationPeriod = o.period || (o.dueDate || o.createdAt).slice(0, 7);
+      if (obligationPeriod !== viewingPeriod) return false;
+      if (activePayCycle === 'MONTHLY') return true;
+      return o.payCycle === activePayCycle;
+    });
+    const committed = activeObligations.reduce((sum, o) => sum + getObligationRemainingAmount(o, expenses), 0);
 
-    const byCategory: Record<CategoryType, number> = {} as Record<
-      CategoryType,
-      number
-    >;
+    const byCategory: Record<CategoryType, number> = {} as Record<CategoryType, number>;
     CATEGORIES.forEach((cat) => {
       byCategory[cat.id] = 0;
     });
 
     monthExpenses.forEach((expense) => {
-      byCategory[expense.category] =
-        (byCategory[expense.category] || 0) + expense.amount;
+      byCategory[expense.category] = (byCategory[expense.category] || 0) + expense.amount;
     });
 
     const q1Expenses = expenses
-      .filter((e) => e.date.startsWith(currentMonth) && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q1')
+      .filter((e) => e.status !== 'reverted' && (e.financialPeriod || e.date.slice(0, 7)) === viewingPeriod && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q1')
       .reduce((sum, e) => sum + e.amount, 0);
     const q2Expenses = expenses
-      .filter((e) => e.date.startsWith(currentMonth) && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q2')
+      .filter((e) => e.status !== 'reverted' && (e.financialPeriod || e.date.slice(0, 7)) === viewingPeriod && (e.payCycle || getPayCycleFromDate(e.date)) === 'Q2')
       .reduce((sum, e) => sum + e.amount, 0);
 
     const q1Committed = obligations
-      .filter((o) => !o.isPaid && o.payCycle === 'Q1')
-      .reduce((sum, o) => sum + o.amount, 0);
+      .filter((o) => (o.period || (o.dueDate || o.createdAt).slice(0, 7)) === viewingPeriod && o.payCycle === 'Q1')
+      .reduce((sum, o) => sum + getObligationRemainingAmount(o, expenses), 0);
     const q2Committed = obligations
-      .filter((o) => !o.isPaid && o.payCycle === 'Q2')
-      .reduce((sum, o) => sum + o.amount, 0);
+      .filter((o) => (o.period || (o.dueDate || o.createdAt).slice(0, 7)) === viewingPeriod && o.payCycle === 'Q2')
+      .reduce((sum, o) => sum + getObligationRemainingAmount(o, expenses), 0);
+
+    // Initial balances from applied rollovers
+    const rolloversList = periodRollovers || [];
+    const q1InitialBalance = rolloversList
+      .filter((ro) => ro.destinationPeriod === viewingPeriod && ro.destinationCycle === 'Q1' && ro.status === 'applied')
+      .reduce((sum, ro) => sum + ro.amount, 0);
+
+    const q2InitialBalance = rolloversList
+      .filter((ro) => ro.destinationPeriod === viewingPeriod && ro.destinationCycle === 'Q2' && ro.status === 'applied')
+      .reduce((sum, ro) => sum + ro.amount, 0);
+
+    // Anti-double-counting rule for Monthly: only rollovers coming from previous months
+    const monthInitialBalance = rolloversList
+      .filter((ro) => ro.destinationPeriod === viewingPeriod && ro.sourcePeriod !== viewingPeriod && ro.status === 'applied')
+      .reduce((sum, ro) => sum + ro.amount, 0);
+
+    let activeInitialBalance = 0;
+    if (activePayCycle === 'Q1') activeInitialBalance = q1InitialBalance;
+    else if (activePayCycle === 'Q2') activeInitialBalance = q2InitialBalance;
+    else activeInitialBalance = monthInitialBalance;
 
     const incomeCalc = computeIncomeAndAvailability({
       incomes,
       profile,
-      currentMonth,
+      viewingPeriod,
       activePayCycle,
       totalExpenses,
       committed,
+      initialBalance: activeInitialBalance,
     });
 
     const q1Stats = {
@@ -350,7 +418,8 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
       pendingSalary: incomeCalc.q1BaseStats.pendingSalary,
       expenses: q1Expenses,
       committed: q1Committed,
-      freeAvailable: incomeCalc.q1BaseStats.receivedIncome - q1Expenses - q1Committed,
+      freeAvailable: incomeCalc.q1BaseStats.receivedIncome + q1InitialBalance - q1Expenses - q1Committed,
+      initialBalance: q1InitialBalance,
     };
 
     const q2Stats = {
@@ -362,11 +431,12 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
       pendingSalary: incomeCalc.q2BaseStats.pendingSalary,
       expenses: q2Expenses,
       committed: q2Committed,
-      freeAvailable: incomeCalc.q2BaseStats.receivedIncome - q2Expenses - q2Committed,
+      freeAvailable: incomeCalc.q2BaseStats.receivedIncome + q2InitialBalance - q2Expenses - q2Committed,
+      initialBalance: q2InitialBalance,
     };
 
     const monthlyStats: MonthlyStats = {
-      month: currentMonth,
+      month: viewingPeriod,
       payCycle: activePayCycle,
       totalIncome: incomeCalc.receivedIncome,
       receivedIncome: incomeCalc.receivedIncome,
@@ -383,10 +453,11 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
       byCategory,
       q1Stats,
       q2Stats,
+      initialBalance: activeInitialBalance,
     };
 
     // Update budget spent amounts
-    const monthBudgets = budgets.filter((b) => b.month === currentMonth);
+    const monthBudgets = budgets.filter((b) => b.month === viewingPeriod);
     const updatedBudgets = monthBudgets.map((budget) => ({
       ...budget,
       spent: byCategory[budget.category] || 0,
@@ -433,7 +504,11 @@ export const createStatsActions = (set: StoreSet, get: StoreGet) => ({
   },
 
   setCurrentMonth: (month: string) => {
-    set({ currentMonth: month });
+    set({ currentMonth: month, viewingPeriod: month });
+    get().recalculateStats();
+  },
+  setViewingPeriod: (period: string) => {
+    set({ viewingPeriod: period });
     get().recalculateStats();
   },
   

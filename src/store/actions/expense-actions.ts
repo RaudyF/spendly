@@ -1,10 +1,17 @@
 import { Expense } from '@/types';
 import { expensesDB } from '@/lib/db';
-import { generateId } from '@/lib/utils';
+import { generateId, getPayCycleFromDate } from '@/lib/utils';
 import { StoreSet, StoreGet } from '../types';
 
 export const createExpenseActions = (set: StoreSet, get: StoreGet) => ({
   addExpense: async (expenseData: Omit<Expense, 'id' | 'createdAt' | 'updatedAt'>) => {
+    const period = expenseData.financialPeriod || expenseData.date.slice(0, 7);
+    const cycle = expenseData.payCycle || getPayCycleFromDate(expenseData.date);
+
+    if (get().isPeriodClosed(period, cycle)) {
+      throw new Error(`No se pueden registrar gastos en un período cerrado (${period} ${cycle || ''}). Reabre el período primero.`);
+    }
+
     const now = new Date().toISOString();
     const expense: Expense = {
       ...expenseData,
@@ -23,6 +30,13 @@ export const createExpenseActions = (set: StoreSet, get: StoreGet) => ({
       console.error('Failed to persist expense:', error);
     }
 
+    get().enqueuePendingChange({
+      entityType: 'expense',
+      action: 'create',
+      entityId: expense.id,
+      payload: expense,
+    }).catch(console.error);
+
     get().recalculateStats();
     return expense;
   },
@@ -30,6 +44,20 @@ export const createExpenseActions = (set: StoreSet, get: StoreGet) => ({
   updateExpense: async (id: string, updates: Partial<Expense>) => {
     const expense = get().expenses.find((e) => e.id === id);
     if (!expense) return;
+
+    const currentPeriod = expense.financialPeriod || expense.date.slice(0, 7);
+    const currentCycle = expense.payCycle || getPayCycleFromDate(expense.date);
+    if (get().isPeriodClosed(currentPeriod, currentCycle)) {
+      throw new Error(`No se pueden modificar gastos de un período cerrado (${currentPeriod} ${currentCycle || ''}). Reabre el período primero.`);
+    }
+
+    if (updates.date || updates.financialPeriod || updates.payCycle) {
+      const targetPeriod = updates.financialPeriod || (updates.date ? updates.date.slice(0, 7) : currentPeriod);
+      const targetCycle = updates.payCycle || (updates.date ? getPayCycleFromDate(updates.date) : currentCycle);
+      if (get().isPeriodClosed(targetPeriod, targetCycle)) {
+        throw new Error(`No se puede mover un gasto a un período cerrado (${targetPeriod} ${targetCycle || ''}).`);
+      }
+    }
 
     const updated = {
       ...expense,
@@ -47,10 +75,26 @@ export const createExpenseActions = (set: StoreSet, get: StoreGet) => ({
       console.error('Failed to update expense:', error);
     }
 
+    get().enqueuePendingChange({
+      entityType: 'expense',
+      action: 'update',
+      entityId: id,
+      payload: updated,
+    }).catch(console.error);
+
     get().recalculateStats();
   },
 
   deleteExpense: async (id: string) => {
+    const expense = get().expenses.find((e) => e.id === id);
+    if (!expense) return;
+
+    const period = expense.financialPeriod || expense.date.slice(0, 7);
+    const cycle = expense.payCycle || getPayCycleFromDate(expense.date);
+    if (get().isPeriodClosed(period, cycle)) {
+      throw new Error(`No se pueden eliminar gastos de un período cerrado (${period} ${cycle || ''}). Reabre el período primero.`);
+    }
+
     set((state) => ({
       expenses: state.expenses.filter((e) => e.id !== id),
     }));
@@ -60,6 +104,12 @@ export const createExpenseActions = (set: StoreSet, get: StoreGet) => ({
     } catch (error) {
       console.error('Failed to delete expense:', error);
     }
+
+    get().enqueuePendingChange({
+      entityType: 'expense',
+      action: 'delete',
+      entityId: id,
+    }).catch(console.error);
 
     get().recalculateStats();
   },

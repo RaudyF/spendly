@@ -25,11 +25,25 @@ export const StatusBadge: React.FC<StatusBadgeProps> = ({
 
   switch (normalizedStatus) {
     case 'confirmed':
+    case 'paid':
     case 'pagado':
     case 'recibido':
-      displayLabel = displayLabel || (normalizedStatus === 'pagado' ? 'Pagado' : normalizedStatus === 'recibido' ? 'Recibido' : 'Confirmado');
+      displayLabel = displayLabel || (normalizedStatus === 'pagado' || normalizedStatus === 'paid' ? 'Pagado' : normalizedStatus === 'recibido' ? 'Recibido' : 'Confirmado');
       bgClass = 'bg-emerald-50 dark:bg-emerald-950/50 text-emerald-700 dark:text-emerald-400 border border-emerald-200/50 dark:border-emerald-800/50';
       Icon = CheckCircle2;
+      break;
+    case 'partial':
+    case 'parcial':
+      displayLabel = displayLabel || 'Parcial';
+      bgClass = 'bg-sky-50 dark:bg-sky-950/50 text-sky-700 dark:text-sky-400 border border-sky-200/50 dark:border-sky-800/50';
+      Icon = Clock;
+      break;
+    case 'cancelled':
+    case 'cancelado':
+    case 'cancelada':
+      displayLabel = displayLabel || 'Cancelada';
+      bgClass = 'bg-surface-100 dark:bg-surface-800 text-surface-500 dark:text-surface-400 border border-surface-200 dark:border-surface-700';
+      Icon = X;
       break;
     case 'esperado':
     case 'planificado':

@@ -17,6 +17,7 @@ import { useStore } from '@/store';
 import { useAuth } from '@/components/auth/auth-provider';
 import { Button, Divider } from '@/components/ui';
 import { ConfirmDialog } from '@/components/ui/modal';
+import { SyncStatusIndicator } from '@/components/ui/sync-status-indicator';
 import { SettingsSection, SettingsItem } from './settings-section';
 import { DataExportModal } from './settings-modals';
 import { DataImportModal } from './data-import-modal';
@@ -87,6 +88,11 @@ export const DataSyncSection: React.FC = () => {
         title="Datos y Sincronización"
         description="Administra la persistencia en la nube, respaldo, restauración y aislamiento de cuenta"
       >
+        {/* Offline-First Sync Engine Status */}
+        <div className="mx-5 mt-4">
+          <SyncStatusIndicator variant="full" showRetry={true} />
+        </div>
+
         {/* Database Engine Status Banner */}
         <div className="mx-5 mt-4 p-4 rounded-xl border transition-colors bg-surface-50 dark:bg-surface-800/40 border-surface-200 dark:border-surface-700/60">
           <div className="flex items-start justify-between gap-3">

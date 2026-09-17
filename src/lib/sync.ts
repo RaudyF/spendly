@@ -1,12 +1,26 @@
-/**
- * Cloud Sync Service
- * Handles synchronization between local IndexedDB storage and Neon cloud database
- * 
- * Note: Cloud sync requires server-side API routes as DATABASE_URL is not available on client
- */
-
-import { expensesDB, budgetsDB, goalsDB, incomesDB, profileDB } from './db';
-import type { Expense, Budget, SavingsGoal, Income, UserProfile } from '@/types';
+import {
+  expensesDB,
+  budgetsDB,
+  goalsDB,
+  incomesDB,
+  profileDB,
+  obligationsDB,
+  recurringObligationsDB,
+  periodStatesDB,
+  periodRolloversDB,
+} from './db';
+import type {
+  Expense,
+  Budget,
+  SavingsGoal,
+  Income,
+  UserProfile,
+  Obligation,
+  RecurringObligation,
+  PeriodState,
+  PeriodRollover,
+} from '@/types';
+import { reconcileRecordCollection, withRecordMetadata, getClientSource } from './sync-conflict';
 
 export interface SyncResult {
   success: boolean;
@@ -16,6 +30,10 @@ export interface SyncResult {
     budgets: number;
     goals: number;
     incomes: number;
+    obligations?: number;
+    recurringObligations?: number;
+    periodStates?: number;
+    periodRollovers?: number;
   };
 }
 
@@ -28,14 +46,12 @@ function isServerSide(): boolean {
 
 /**
  * Push local data to cloud database
- * Note: This should be called through an API route, not directly from client
  */
 export async function pushToCloud(userId: string): Promise<SyncResult> {
-  // Cloud sync is not available on client side
   if (!isServerSide()) {
     return {
       success: false,
-      error: 'Cloud sync is only available through API routes. This feature is coming soon.',
+      error: 'Cloud sync is only available through API routes.',
       synced: { expenses: 0, budgets: 0, goals: 0, incomes: 0 },
     };
   }
@@ -46,19 +62,15 @@ export async function pushToCloud(userId: string): Promise<SyncResult> {
   };
 
   try {
-    // Dynamic import to avoid loading neon on client side
     const neon = await import('./neon');
+    const source = getClientSource();
     
     // Sync expenses
     const expenses = await expensesDB.getAll();
     for (const expense of expenses) {
       await neon.createExpense({
-        id: expense.id,
-        userId: userId,
-        amount: expense.amount,
-        category: expense.category,
-        description: expense.description,
-        date: expense.date,
+        ...withRecordMetadata(expense, { userId, source }),
+        userId,
       });
       result.synced.expenses++;
     }
@@ -67,9 +79,8 @@ export async function pushToCloud(userId: string): Promise<SyncResult> {
     const budgets = await budgetsDB.getAll();
     for (const budget of budgets) {
       await neon.createBudget({
-        id: budget.id,
-        userId: userId,
-        category: budget.category,
+        ...withRecordMetadata(budget, { userId, source }),
+        userId,
         amount: budget.limit,
         period: budget.month,
       });
@@ -80,16 +91,52 @@ export async function pushToCloud(userId: string): Promise<SyncResult> {
     const goals = await goalsDB.getAll();
     for (const goal of goals) {
       await neon.createGoal({
-        id: goal.id,
-        userId: userId,
-        name: goal.name,
-        targetAmount: goal.targetAmount,
-        currentAmount: goal.currentAmount,
+        ...withRecordMetadata(goal, { userId, source }),
+        userId,
         deadline: goal.deadline || null,
-        color: goal.color || '#3B82F6',
       });
       result.synced.goals++;
     }
+
+    // Sync recurring obligation templates
+    const recurringList = await recurringObligationsDB.getAll();
+    for (const tpl of recurringList) {
+      await neon.createRecurringObligation({
+        ...withRecordMetadata(tpl, { userId, source }),
+        userId,
+      });
+    }
+    result.synced.recurringObligations = recurringList.length;
+
+    // Sync obligation instances
+    const obligations = await obligationsDB.getAll();
+    for (const obs of obligations) {
+      await neon.createObligation({
+        ...withRecordMetadata(obs, { userId, source }),
+        userId,
+      });
+    }
+    result.synced.obligations = obligations.length;
+
+    // Sync period states
+    const periodStates = await periodStatesDB.getAll();
+    for (const ps of periodStates) {
+      await neon.savePeriodState({
+        ...withRecordMetadata(ps, { userId, source }),
+        userId,
+      });
+    }
+    result.synced.periodStates = periodStates.length;
+
+    // Sync period rollovers
+    const rollovers = await periodRolloversDB.getAll();
+    for (const ro of rollovers) {
+      await neon.savePeriodRollover({
+        ...withRecordMetadata(ro, { userId, source }),
+        userId,
+      });
+    }
+    result.synced.periodRollovers = rollovers.length;
 
     return result;
   } catch (error: any) {
@@ -102,15 +149,14 @@ export async function pushToCloud(userId: string): Promise<SyncResult> {
 }
 
 /**
- * Pull data from cloud database to local storage
- * Note: This should be called through an API route, not directly from client
+ * Pull data from cloud database to local storage using per-record reconciliation
+ * Preserves local unsynced edits and pulls newer remote changes without wiping data.
  */
 export async function pullFromCloud(userId: string): Promise<SyncResult> {
-  // Cloud sync is not available on client side
   if (!isServerSide()) {
     return {
       success: false,
-      error: 'Cloud sync is only available through API routes. This feature is coming soon.',
+      error: 'Cloud sync is only available through API routes.',
       synced: { expenses: 0, budgets: 0, goals: 0, incomes: 0 },
     };
   }
@@ -121,58 +167,198 @@ export async function pullFromCloud(userId: string): Promise<SyncResult> {
   };
 
   try {
-    // Dynamic import to avoid loading neon on client side
     const neon = await import('./neon');
     
-    // Clear local data first
-    await clearLocalData();
-
-    // Sync expenses from cloud
-    const cloudExpenses = await neon.getExpenses(userId);
-    for (const expense of cloudExpenses) {
-      await expensesDB.add({
-        id: expense.id,
-        amount: expense.amount,
-        category: expense.category,
-        description: expense.description || '',
-        date: expense.date,
-        createdAt: expense.created_at || new Date().toISOString(),
-        updatedAt: expense.updated_at || new Date().toISOString(),
-      });
-      result.synced.expenses++;
+    // 1. Reconcile expenses
+    const localExpenses = await expensesDB.getAll();
+    const cloudExpenses = (await neon.getExpenses(userId)).map((e: any) => ({
+      id: e.id,
+      userId,
+      amount: parseFloat(e.amount),
+      category: e.category,
+      description: e.description || '',
+      date: e.date,
+      payCycle: e.pay_cycle || undefined,
+      createdAt: e.created_at || new Date().toISOString(),
+      updatedAt: e.updated_at || e.created_at || new Date().toISOString(),
+      deletedAt: e.deleted_at || null,
+      source: e.source || 'cloud',
+      sourceId: e.source_id,
+    }));
+    const expenseRecon = reconcileRecordCollection(localExpenses, cloudExpenses);
+    for (const item of expenseRecon.toSaveLocally) {
+      await expensesDB.add(item);
     }
-
-    // Sync budgets from cloud
-    const cloudBudgets = await neon.getBudgets(userId);
-    for (const budget of cloudBudgets) {
-      await budgetsDB.add({
-        id: budget.id,
-        category: budget.category,
-        limit: budget.amount,
-        spent: 0, // Will be recalculated
-        month: budget.period,
-        createdAt: budget.created_at || new Date().toISOString(),
-        updatedAt: budget.updated_at || new Date().toISOString(),
-      });
-      result.synced.budgets++;
+    for (const id of expenseRecon.toDeleteLocally) {
+      await expensesDB.delete(id);
     }
+    result.synced.expenses = expenseRecon.merged.length;
 
-    // Sync goals from cloud
-    const cloudGoals = await neon.getGoals(userId);
-    for (const goal of cloudGoals) {
-      await goalsDB.add({
-        id: goal.id,
-        name: goal.name,
-        targetAmount: goal.target_amount,
-        currentAmount: goal.current_amount,
-        deadline: goal.deadline || undefined,
-        color: goal.color || '#3B82F6',
-        icon: goal.icon || 'piggy-bank',
-        createdAt: goal.created_at || new Date().toISOString(),
-        updatedAt: goal.updated_at || new Date().toISOString(),
-      });
-      result.synced.goals++;
+    // 2. Reconcile budgets
+    const localBudgets = await budgetsDB.getAll();
+    const cloudBudgets = (await neon.getBudgets(userId)).map((b: any) => ({
+      id: b.id,
+      userId,
+      category: b.category,
+      limit: parseFloat(b.amount),
+      spent: 0,
+      month: b.period,
+      periodType: b.period_type || 'MONTHLY',
+      createdAt: b.created_at || new Date().toISOString(),
+      updatedAt: b.updated_at || new Date().toISOString(),
+      deletedAt: b.deleted_at || null,
+      source: b.source || 'cloud',
+      sourceId: b.source_id,
+    }));
+    const budgetRecon = reconcileRecordCollection(localBudgets, cloudBudgets);
+    for (const item of budgetRecon.toSaveLocally) {
+      await budgetsDB.add(item);
     }
+    for (const id of budgetRecon.toDeleteLocally) {
+      await budgetsDB.delete(id);
+    }
+    result.synced.budgets = budgetRecon.merged.length;
+
+    // 3. Reconcile goals
+    const localGoals = await goalsDB.getAll();
+    const cloudGoals = (await neon.getGoals(userId)).map((g: any) => ({
+      id: g.id,
+      userId,
+      name: g.name,
+      targetAmount: parseFloat(g.target_amount),
+      currentAmount: parseFloat(g.current_amount),
+      deadline: g.deadline || undefined,
+      color: g.color || '#3B82F6',
+      icon: g.icon || 'piggy-bank',
+      createdAt: g.created_at || new Date().toISOString(),
+      updatedAt: g.updated_at || new Date().toISOString(),
+      deletedAt: g.deleted_at || null,
+      source: g.source || 'cloud',
+      sourceId: g.source_id,
+    }));
+    const goalRecon = reconcileRecordCollection(localGoals, cloudGoals);
+    for (const item of goalRecon.toSaveLocally) {
+      await goalsDB.add(item);
+    }
+    for (const id of goalRecon.toDeleteLocally) {
+      await goalsDB.delete(id);
+    }
+    result.synced.goals = goalRecon.merged.length;
+
+    // 4. Reconcile recurring templates
+    const localRecurring = await recurringObligationsDB.getAll();
+    const cloudRecurring = (await neon.getRecurringObligations(userId)).map((r: any) => ({
+      id: r.id,
+      userId,
+      name: r.name,
+      amount: parseFloat(r.amount),
+      category: r.category,
+      frequency: r.frequency || 'monthly',
+      dayOfMonth: r.day_of_month || 1,
+      payCycle: r.pay_cycle || 'MONTHLY',
+      startDate: r.start_date,
+      endDate: r.end_date || undefined,
+      isActive: Boolean(r.is_active ?? true),
+      createdAt: r.created_at || new Date().toISOString(),
+      updatedAt: r.updated_at || new Date().toISOString(),
+      deletedAt: r.deleted_at || null,
+      source: r.source || 'cloud',
+      sourceId: r.source_id,
+    }));
+    const recRecon = reconcileRecordCollection(localRecurring, cloudRecurring);
+    for (const item of recRecon.toSaveLocally) {
+      await recurringObligationsDB.add(item);
+    }
+    for (const id of recRecon.toDeleteLocally) {
+      await recurringObligationsDB.delete(id);
+    }
+    result.synced.recurringObligations = recRecon.merged.length;
+
+    // 5. Reconcile obligations
+    const localObligations = await obligationsDB.getAll();
+    const cloudObligations = (await neon.getObligations(userId)).map((o: any) => ({
+      id: o.id,
+      userId,
+      name: o.name,
+      amount: parseFloat(o.amount),
+      category: o.category,
+      payCycle: o.pay_cycle,
+      dueDate: o.due_date || undefined,
+      isPaid: Boolean(o.is_paid),
+      status: o.status || 'pending',
+      period: o.period || undefined,
+      templateId: o.template_id || undefined,
+      idempotencyKey: o.idempotency_key || undefined,
+      createdAt: o.created_at || new Date().toISOString(),
+      updatedAt: o.updated_at || new Date().toISOString(),
+      deletedAt: o.deleted_at || null,
+      source: o.source || 'cloud',
+      sourceId: o.source_id,
+    }));
+    const obsRecon = reconcileRecordCollection(localObligations, cloudObligations);
+    for (const item of obsRecon.toSaveLocally) {
+      await obligationsDB.add(item);
+    }
+    for (const id of obsRecon.toDeleteLocally) {
+      await obligationsDB.delete(id);
+    }
+    result.synced.obligations = obsRecon.merged.length;
+
+    // 6. Reconcile period states
+    const localPeriodStates = await periodStatesDB.getAll();
+    const cloudPeriodStates = (await neon.getPeriodStates(userId)).map((ps: any) => ({
+      id: ps.id,
+      userId,
+      period: ps.period,
+      cycle: ps.cycle,
+      status: ps.status,
+      closedAt: ps.closed_at ? new Date(ps.closed_at).toISOString() : undefined,
+      reopenedAt: ps.reopened_at ? new Date(ps.reopened_at).toISOString() : undefined,
+      reopenReason: ps.reopen_reason || undefined,
+      frozenSummary: ps.frozen_summary || undefined,
+      createdAt: ps.created_at || new Date().toISOString(),
+      updatedAt: ps.updated_at || new Date().toISOString(),
+      deletedAt: ps.deleted_at || null,
+      source: ps.source || 'cloud',
+      sourceId: ps.source_id,
+    }));
+    const psRecon = reconcileRecordCollection(localPeriodStates, cloudPeriodStates);
+    for (const item of psRecon.toSaveLocally) {
+      await periodStatesDB.update(item);
+    }
+    for (const id of psRecon.toDeleteLocally) {
+      await periodStatesDB.delete(id);
+    }
+    result.synced.periodStates = psRecon.merged.length;
+
+    // 7. Reconcile period rollovers
+    const localRollovers = await periodRolloversDB.getAll();
+    const cloudRollovers = (await neon.getPeriodRollovers(userId)).map((ro: any) => ({
+      id: ro.id,
+      userId,
+      sourcePeriod: ro.source_period,
+      sourceCycle: ro.source_cycle,
+      destinationPeriod: ro.destination_period,
+      destinationCycle: ro.destination_cycle,
+      amount: parseFloat(ro.amount),
+      type: ro.type,
+      status: ro.status,
+      idempotencyKey: ro.idempotency_key || undefined,
+      goalAllocation: ro.goal_allocation || undefined,
+      createdAt: ro.created_at || new Date().toISOString(),
+      updatedAt: ro.updated_at || new Date().toISOString(),
+      deletedAt: ro.deleted_at || null,
+      source: ro.source || 'cloud',
+      sourceId: ro.source_id,
+    }));
+    const roRecon = reconcileRecordCollection(localRollovers, cloudRollovers);
+    for (const item of roRecon.toSaveLocally) {
+      await periodRolloversDB.update(item);
+    }
+    for (const id of roRecon.toDeleteLocally) {
+      await periodRolloversDB.delete(id);
+    }
+    result.synced.periodRollovers = roRecon.merged.length;
 
     return result;
   } catch (error: any) {
@@ -185,26 +371,23 @@ export async function pullFromCloud(userId: string): Promise<SyncResult> {
 }
 
 /**
- * Full two-way sync - merges local and cloud data
+ * Full two-way sync - merges local and cloud data non-destructively
  */
 export async function syncData(userId: string): Promise<SyncResult> {
-  // Cloud sync is not available on client side
   if (!isServerSide()) {
     return {
       success: false,
-      error: 'Cloud sync is only available through API routes. This feature is coming soon.',
+      error: 'Cloud sync is only available through API routes.',
       synced: { expenses: 0, budgets: 0, goals: 0, incomes: 0 },
     };
   }
 
   try {
-    // First push local to cloud
     const pushResult = await pushToCloud(userId);
     if (!pushResult.success) {
       return pushResult;
     }
 
-    // Then pull any new data from cloud
     const pullResult = await pullFromCloud(userId);
     
     return {
@@ -215,6 +398,10 @@ export async function syncData(userId: string): Promise<SyncResult> {
         budgets: pushResult.synced.budgets + pullResult.synced.budgets,
         goals: pushResult.synced.goals + pullResult.synced.goals,
         incomes: pushResult.synced.incomes + pullResult.synced.incomes,
+        obligations: (pushResult.synced.obligations || 0) + (pullResult.synced.obligations || 0),
+        recurringObligations: (pushResult.synced.recurringObligations || 0) + (pullResult.synced.recurringObligations || 0),
+        periodStates: (pushResult.synced.periodStates || 0) + (pullResult.synced.periodStates || 0),
+        periodRollovers: (pushResult.synced.periodRollovers || 0) + (pullResult.synced.periodRollovers || 0),
       },
     };
   } catch (error: any) {
@@ -223,31 +410,6 @@ export async function syncData(userId: string): Promise<SyncResult> {
       error: error.message || 'Sync failed',
       synced: { expenses: 0, budgets: 0, goals: 0, incomes: 0 },
     };
-  }
-}
-
-/**
- * Clear all local data
- */
-async function clearLocalData(): Promise<void> {
-  const expenses = await expensesDB.getAll();
-  for (const expense of expenses) {
-    await expensesDB.delete(expense.id);
-  }
-
-  const budgets = await budgetsDB.getAll();
-  for (const budget of budgets) {
-    await budgetsDB.delete(budget.id);
-  }
-
-  const goals = await goalsDB.getAll();
-  for (const goal of goals) {
-    await goalsDB.delete(goal.id);
-  }
-
-  const incomes = await incomesDB.getAll();
-  for (const income of incomes) {
-    await incomesDB.delete(income.id);
   }
 }
 

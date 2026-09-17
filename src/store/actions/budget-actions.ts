@@ -6,7 +6,12 @@ import { StoreSet, StoreGet } from '../types';
 
 export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
   setBudget: async (category: CategoryType, limit: number) => {
-    const month = get().currentMonth;
+    const month = get().viewingPeriod;
+
+    if (get().isPeriodClosed(month, 'MONTHLY')) {
+      throw new Error(`No se pueden ajustar presupuestos en un período cerrado (${month}). Reabre el período primero.`);
+    }
+
     const now = new Date().toISOString();
     const existingList = get().budgets.filter(
       (b) => b.category === category && b.month === month
@@ -39,6 +44,13 @@ export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
       } catch (error) {
         console.error('Failed to update budget:', error);
       }
+
+      get().enqueuePendingChange({
+        entityType: 'budget',
+        action: 'update',
+        entityId: updated.id,
+        payload: updated,
+      }).catch(console.error);
     } else {
       const budget: Budget = {
         id: generateId(),
@@ -59,6 +71,13 @@ export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
       } catch (error) {
         console.error('Failed to add budget:', error);
       }
+
+      get().enqueuePendingChange({
+        entityType: 'budget',
+        action: 'create',
+        entityId: budget.id,
+        payload: budget,
+      }).catch(console.error);
     }
 
     get().recalculateStats();
@@ -99,6 +118,13 @@ export const createBudgetActions = (set: StoreSet, get: StoreGet) => ({
         ...newBudgets,
       ],
     }));
+
+    get().enqueuePendingChange({
+      entityType: 'budget',
+      action: 'create',
+      entityId: 'batch_defaults_' + month,
+      payload: newBudgets,
+    }).catch(console.error);
 
     get().recalculateStats();
   },

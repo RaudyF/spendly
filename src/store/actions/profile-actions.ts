@@ -23,6 +23,12 @@ export const createProfileActions = (set: StoreSet, get: StoreGet) => ({
 
     await profileDB.set(profile);
     set({ profile });
+    get().enqueuePendingChange({
+      entityType: 'profile',
+      action: 'update',
+      entityId: profile.id,
+      payload: profile,
+    }).catch(console.error);
     get().recalculateStats();
   },
 

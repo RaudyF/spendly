@@ -6,7 +6,13 @@
     "dev": "next dev -p 3000 -H 0.0.0.0",
     "build": "cross-env NODE_ENV=production next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --experimental-strip-types tests/run-all-tests.mjs",
+    "test:unit": "node --experimental-strip-types tests/calendar-unit.test.mjs",
+    "test:store": "node --experimental-strip-types tests/store-actions.test.mjs",
+    "test:closing": "node --experimental-strip-types tests/closing-rollover.test.mjs",
+    "test:concurrency": "node --experimental-strip-types tests/concurrency-idempotency.test.mjs",
+    "test:migration": "node --experimental-strip-types tests/migration-persistence.test.mjs"
   },
   "dependencies": {
     "@google/genai": "latest",

@@ -19,7 +19,7 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
 import { useStore } from '@/store';
 import { useAuth } from '@/components/auth/auth-provider';
-import { Avatar } from '@/components/ui';
+import { Avatar, SyncStatusIndicator } from '@/components/ui';
 import { navItems } from './nav-items';
 
 // Mobile Bottom Navigation
@@ -288,7 +288,10 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
             )}
           </div>
           {rightAction || (
-            <Avatar name={displayName} src={avatarUrl} size="sm" />
+            <div className="flex items-center gap-2">
+              <SyncStatusIndicator variant="compact" />
+              <Avatar name={displayName} src={avatarUrl} size="sm" />
+            </div>
           )}
         </div>
       </header>
@@ -331,7 +334,7 @@ export const MobileHeader: React.FC<MobileHeaderProps> = ({
                 </button>
               </div>
 
-              <nav className="flex-1 p-4 overflow-y-auto">
+              <nav className="flex-1 p-4 overflow-y-auto sidebar-scrollbar">
                 <ul className="space-y-1">
                   {navItems.map((item) => {
                     const isActive = pathname === item.href;

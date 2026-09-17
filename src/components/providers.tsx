@@ -19,9 +19,32 @@ function AppInitializer({ children }: { children: React.ReactNode }) {
   const isLoading = useStore((state) => state.isLoading);
   const currentUserId = useStore((state) => state.currentUserId);
   const expenses = useStore((state) => state.expenses);
+  const setOnlineStatus = useStore((state) => state.setOnlineStatus);
 
   const pathname = usePathname();
   const { user, isLoading: authLoading } = useAuth();
+
+  // Connectivity Listener: auto-reconnect and process pending changes on online
+  useEffect(() => {
+    const handleOnline = () => {
+      setOnlineStatus(true);
+    };
+
+    const handleOffline = () => {
+      setOnlineStatus(false);
+    };
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    // Initial sync of connectivity state
+    setOnlineStatus(typeof navigator !== 'undefined' ? navigator.onLine : true);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, [setOnlineStatus]);
 
   // Safeguard timeout to ensure no route is ever blocked indefinitely
   useEffect(() => {

@@ -20,7 +20,7 @@ import { CustomTooltip } from './custom-tooltip';
 export const SpendingChart: React.FC = () => {
   const expenses = useStore((state) => state.expenses);
   const profile = useStore((state) => state.profile);
-  const currentMonth = useStore((state) => state.currentMonth);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
   const activePayCycle = useStore((state) => state.activePayCycle);
   const { resolvedTheme } = useTheme();
 
@@ -29,7 +29,7 @@ export const SpendingChart: React.FC = () => {
     const days = [];
     
     // Parse current month (e.g. '2024-03')
-    const [yearStr, monthStr] = currentMonth.split('-');
+    const [yearStr, monthStr] = viewingPeriod.split('-');
     const year = parseInt(yearStr, 10);
     const monthIndex = parseInt(monthStr, 10) - 1; // 0-based
     
@@ -47,7 +47,7 @@ export const SpendingChart: React.FC = () => {
     
     // Filter expenses matching current month and active cycle
     const cycleExpenses = expenses.filter((e) => {
-      if (!e.date.startsWith(currentMonth)) return false;
+      if (!e.date.startsWith(viewingPeriod)) return false;
       if (activePayCycle === 'MONTHLY') return true;
       return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
     });
@@ -69,7 +69,7 @@ export const SpendingChart: React.FC = () => {
     }
     
     return days;
-  }, [expenses, currentMonth, activePayCycle]);
+  }, [expenses, viewingPeriod, activePayCycle]);
 
   const gridColor = resolvedTheme === 'dark' ? '#404040' : '#e5e5e5';
   const textColor = resolvedTheme === 'dark' ? '#a3a3a3' : '#737373';

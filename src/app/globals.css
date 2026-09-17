@@ -44,6 +44,39 @@
     scroll-behavior: smooth;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 0.8) transparent;
+  }
+  html.dark,
+  :root.dark,
+  [data-theme='dark'] {
+    scrollbar-color: rgba(71, 85, 105, 0.7) transparent;
+  }
+
+  /* Aesthetic global scrollbars */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: rgba(203, 213, 225, 0.8);
+    border-radius: 9999px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.95);
+  }
+  .dark ::-webkit-scrollbar-thumb,
+  [data-theme='dark'] ::-webkit-scrollbar-thumb,
+  html.dark ::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.7);
+  }
+  .dark ::-webkit-scrollbar-thumb:hover,
+  [data-theme='dark'] ::-webkit-scrollbar-thumb:hover,
+  html.dark ::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.95);
   }
   body {
     @apply bg-surface-50 dark:bg-surface-950 text-surface-900 dark:text-surface-50;
@@ -121,27 +154,70 @@
   .skeleton {
     @apply bg-surface-200 dark:bg-surface-800 rounded-lg animate-pulse;
   }
+  /* Sidebar scrollbar specifically tuned for light and dark themes */
+  .sidebar-scrollbar {
+    scrollbar-width: thin;
+    scrollbar-color: rgba(203, 213, 225, 0.75) transparent;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar {
+    width: 5px;
+    height: 5px;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(203, 213, 225, 0.75);
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
+  }
+  .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(148, 163, 184, 0.95);
+  }
+  .dark .sidebar-scrollbar,
+  [data-theme='dark'] .sidebar-scrollbar,
+  html.dark .sidebar-scrollbar {
+    scrollbar-color: rgba(71, 85, 105, 0.65) transparent;
+  }
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb,
+  [data-theme='dark'] .sidebar-scrollbar::-webkit-scrollbar-thumb,
+  html.dark .sidebar-scrollbar::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.65);
+  }
+  .dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+  [data-theme='dark'] .sidebar-scrollbar::-webkit-scrollbar-thumb:hover,
+  html.dark .sidebar-scrollbar::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.95);
+  }
+
   .scrollbar-thin {
     scrollbar-width: thin;
-    scrollbar-color: rgba(163, 163, 163, 0.5) transparent;
+    scrollbar-color: rgba(203, 213, 225, 0.75) transparent;
   }
-  .dark .scrollbar-thin {
-    scrollbar-color: rgba(82, 82, 82, 0.6) transparent;
+  .dark .scrollbar-thin,
+  [data-theme='dark'] .scrollbar-thin,
+  html.dark .scrollbar-thin {
+    scrollbar-color: rgba(71, 85, 105, 0.65) transparent;
   }
   .scrollbar-thin::-webkit-scrollbar { width: 5px; height: 5px; }
-  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; border-radius: 10px; }
+  .scrollbar-thin::-webkit-scrollbar-track { background: transparent; }
   .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(163, 163, 163, 0.5);
-    border-radius: 10px;
+    background-color: rgba(203, 213, 225, 0.75);
+    border-radius: 9999px;
+    transition: background-color 0.2s ease;
   }
   .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(115, 115, 115, 0.7);
+    background-color: rgba(148, 163, 184, 0.95);
   }
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb {
-    background: rgba(82, 82, 82, 0.6);
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb,
+  [data-theme='dark'] .scrollbar-thin::-webkit-scrollbar-thumb,
+  html.dark .scrollbar-thin::-webkit-scrollbar-thumb {
+    background-color: rgba(71, 85, 105, 0.65);
   }
-  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-    background: rgba(115, 115, 115, 0.7);
+  .dark .scrollbar-thin::-webkit-scrollbar-thumb:hover,
+  [data-theme='dark'] .scrollbar-thin::-webkit-scrollbar-thumb:hover,
+  html.dark .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(100, 116, 139, 0.95);
   }
   .scrollbar-none,
   .scrollbar-hide {

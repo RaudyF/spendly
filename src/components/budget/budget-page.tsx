@@ -13,6 +13,7 @@ import { CategoryType } from '@/types';
 import { format, addMonths, subMonths, isValid, parse } from 'date-fns';
 import { BudgetItem } from './budget-item';
 import { BudgetSetupModal } from './budget-setup-modal';
+import { TimeNavigator } from '@/components/layout/time-navigator';
 
 // Main Budget Page with URL Query persistence & clear variable distinction
 export const BudgetPage: React.FC = () => {
@@ -20,45 +21,19 @@ export const BudgetPage: React.FC = () => {
   const pathname = usePathname();
 
   const budgets = useStore((state) => state.budgets);
-  const currentMonth = useStore((state) => state.currentMonth);
-  const setCurrentMonth = useStore((state) => state.setCurrentMonth);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
+  const setViewingPeriod = useStore((state) => state.setViewingPeriod);
   const setBudget = useStore((state) => state.setBudget);
   const profile = useStore((state) => state.profile);
 
   const [showSetup, setShowSetup] = useState(false);
 
-  // Sync month from URL searchParams if provided and valid
-  useEffect(() => {
-    const monthParam = searchParams.get('month');
-    if (monthParam && /^\d{4}-\d{2}$/.test(monthParam)) {
-      const parsed = parse(monthParam, 'yyyy-MM', new Date());
-      if (isValid(parsed) && monthParam !== currentMonth) {
-        setCurrentMonth(monthParam);
-      }
-    }
-  }, [searchParams, currentMonth, setCurrentMonth]);
-
-  const updateMonthParam = (newMonth: string) => {
-    setCurrentMonth(newMonth);
-    const params = new URLSearchParams(searchParams.toString());
-    params.set('month', newMonth);
-    window.history.replaceState(null, '', `${pathname}?${params.toString()}`);
-  };
-
-  const monthBudgets = budgets.filter((b) => b.month === currentMonth);
+  const monthBudgets = budgets.filter((b) => b.month === viewingPeriod);
   const hasNoBudgets = monthBudgets.length === 0;
 
   const totalBudget = monthBudgets.reduce((sum, b) => sum + b.limit, 0);
   const totalSpent = monthBudgets.reduce((sum, b) => sum + b.spent, 0);
   const totalPercentage = calculatePercentage(totalSpent, totalBudget);
-
-  const handleMonthChange = (direction: 'prev' | 'next') => {
-    const [year, month] = currentMonth.split('-').map(Number);
-    const currentDate = new Date(year, month - 1);
-    const newDate = direction === 'prev' ? subMonths(currentDate, 1) : addMonths(currentDate, 1);
-    const formatted = format(newDate, 'yyyy-MM');
-    updateMonthParam(formatted);
-  };
 
   const handleBudgetEdit = async (category: CategoryType, limit: number) => {
     await setBudget(category, limit);
@@ -82,26 +57,7 @@ export const BudgetPage: React.FC = () => {
           </p>
         </div>
 
-        {/* Month selector with history synchronization */}
-        <div className="flex items-center gap-2 bg-white dark:bg-surface-800 p-1.5 rounded-2xl border border-surface-200/80 dark:border-surface-700 shadow-soft-xs">
-          <button
-            onClick={() => handleMonthChange('prev')}
-            aria-label="Mes anterior"
-            className="p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 transition-colors"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </button>
-          <span className="min-w-[140px] text-center font-semibold text-sm capitalize text-surface-800 dark:text-surface-100">
-            {getMonthName(currentMonth)}
-          </span>
-          <button
-            onClick={() => handleMonthChange('next')}
-            aria-label="Mes siguiente"
-            className="p-2 rounded-xl hover:bg-surface-100 dark:hover:bg-surface-700 text-surface-600 dark:text-surface-300 transition-colors"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </button>
-        </div>
+        <TimeNavigator />
       </div>
 
       {/* Distinction notice banner */}

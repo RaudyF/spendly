@@ -10,11 +10,11 @@ import { itemVariants } from './animations';
 export const SpendingTrend: React.FC = () => {
   const expenses = useStore((state) => state.expenses);
   const profile = useStore((state) => state.profile);
-  const currentMonth = useStore((state) => state.currentMonth);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
   const activePayCycle = useStore((state) => state.activePayCycle);
 
   const data = React.useMemo(() => {
-    const [yearStr, monthStr] = currentMonth.split('-');
+    const [yearStr, monthStr] = viewingPeriod.split('-');
     const year = parseInt(yearStr, 10);
     const monthIndex = parseInt(monthStr, 10) - 1;
     const daysInMonth = new Date(year, monthIndex + 1, 0).getDate();
@@ -29,7 +29,7 @@ export const SpendingTrend: React.FC = () => {
     }
 
     const cycleExpenses = expenses.filter((e) => {
-      if (!e.date.startsWith(currentMonth)) return false;
+      if (!e.date.startsWith(viewingPeriod)) return false;
       if (activePayCycle === 'MONTHLY') return true;
       return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
     });
@@ -49,7 +49,7 @@ export const SpendingTrend: React.FC = () => {
     }
 
     return days;
-  }, [expenses, currentMonth, activePayCycle]);
+  }, [expenses, viewingPeriod, activePayCycle]);
 
   const maxSpend = Math.max(...data.map((d) => d.amount), 1);
   const totalSpend = data.reduce((sum, d) => sum + d.amount, 0);

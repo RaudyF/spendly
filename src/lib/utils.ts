@@ -242,3 +242,17 @@ export function exportToCSV(data: Record<string, unknown>[], filename: string): 
   link.download = `${filename}.csv`;
   link.click();
 }
+
+// Next month period YYYY-MM
+export function getNextMonthPeriod(period: string): string {
+  const [year, month] = period.split('-').map(Number);
+  const nextDate = new Date(year, month, 1);
+  return format(nextDate, 'yyyy-MM');
+}
+
+// Previous month period YYYY-MM
+export function getPreviousMonthPeriod(period: string): string {
+  const [year, month] = period.split('-').map(Number);
+  const prevDate = new Date(year, month - 2, 1);
+  return format(prevDate, 'yyyy-MM');
+}

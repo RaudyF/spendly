@@ -23,6 +23,13 @@ export const createGoalActions = (set: StoreSet, get: StoreGet) => ({
       console.error('Failed to persist goal:', error);
     }
 
+    get().enqueuePendingChange({
+      entityType: 'goal',
+      action: 'create',
+      entityId: goal.id,
+      payload: goal,
+    }).catch(console.error);
+
     return goal;
   },
 
@@ -45,6 +52,13 @@ export const createGoalActions = (set: StoreSet, get: StoreGet) => ({
     } catch (error) {
       console.error('Failed to update goal:', error);
     }
+
+    get().enqueuePendingChange({
+      entityType: 'goal',
+      action: 'update',
+      entityId: id,
+      payload: updated,
+    }).catch(console.error);
   },
 
   deleteGoal: async (id: string) => {
@@ -57,6 +71,12 @@ export const createGoalActions = (set: StoreSet, get: StoreGet) => ({
     } catch (error) {
       console.error('Failed to delete goal:', error);
     }
+
+    get().enqueuePendingChange({
+      entityType: 'goal',
+      action: 'delete',
+      entityId: id,
+    }).catch(console.error);
   },
 
   addToGoal: async (id: string, amount: number) => {
@@ -78,5 +98,12 @@ export const createGoalActions = (set: StoreSet, get: StoreGet) => ({
     } catch (error) {
       console.error('Failed to update goal amount:', error);
     }
+
+    get().enqueuePendingChange({
+      entityType: 'goal',
+      action: 'update',
+      entityId: id,
+      payload: updated,
+    }).catch(console.error);
   },
 });

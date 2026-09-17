@@ -21,11 +21,15 @@ export const ObligationForm: React.FC<ObligationFormProps> = ({
   const addObligation = useStore((state) => state.addObligation);
   const updateObligation = useStore((state) => state.updateObligation);
   const activePayCycle = useStore((state) => state.activePayCycle);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
   
   const [name, setName] = useState(initialData?.name || '');
   const [amount, setAmount] = useState(initialData?.amount.toString() || '');
   const [category, setCategory] = useState<CategoryType>(initialData?.category || 'utilities');
   const [payCycle, setPayCycle] = useState<PayCycle>(initialData?.payCycle || activePayCycle);
+  const [dueDate, setDueDate] = useState<string>(
+    initialData?.dueDate || `${initialData?.period || viewingPeriod}-15`
+  );
   const [isPaid, setIsPaid] = useState(initialData?.isPaid || false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -52,7 +56,9 @@ export const ObligationForm: React.FC<ObligationFormProps> = ({
         amount: numAmount,
         category,
         payCycle,
+        dueDate: dueDate || undefined,
         isPaid,
+        period: initialData?.period || (dueDate ? dueDate.slice(0, 7) : viewingPeriod),
       };
 
       if (initialData) {
@@ -120,7 +126,26 @@ export const ObligationForm: React.FC<ObligationFormProps> = ({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
+              Fecha de Vencimiento
+            </label>
+            <Input
+              type="date"
+              value={dueDate}
+              onChange={(e) => {
+                const newDate = e.target.value;
+                setDueDate(newDate);
+                if (newDate) {
+                  const day = parseInt(newDate.split('-')[2], 10);
+                  if (day <= 15 && payCycle !== 'Q1') setPayCycle('Q1');
+                  else if (day > 15 && payCycle !== 'Q2') setPayCycle('Q2');
+                }
+              }}
+            />
+          </div>
+
           <div>
             <label className="block text-sm font-medium text-surface-700 dark:text-surface-300 mb-1">
               Ciclo de Pago
@@ -135,20 +160,20 @@ export const ObligationForm: React.FC<ObligationFormProps> = ({
               <option value="Q2">Segunda Quincena (Q2)</option>
             </select>
           </div>
-          
-          <div className="flex items-center mt-6">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input 
-                type="checkbox" 
-                checked={isPaid}
-                onChange={(e) => setIsPaid(e.target.checked)}
-                className="rounded border-surface-300 text-primary-600 focus:ring-primary-500 w-5 h-5"
-              />
-              <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
-                Marcada como pagada
-              </span>
-            </label>
-          </div>
+        </div>
+
+        <div className="flex items-center pt-1">
+          <label className="flex items-center gap-2 cursor-pointer">
+            <input 
+              type="checkbox" 
+              checked={isPaid}
+              onChange={(e) => setIsPaid(e.target.checked)}
+              className="rounded border-surface-300 text-primary-600 focus:ring-primary-500 w-4 h-4"
+            />
+            <span className="text-sm font-medium text-surface-700 dark:text-surface-300">
+              Registrar como totalmente pagada
+            </span>
+          </label>
         </div>
         
         {error && (

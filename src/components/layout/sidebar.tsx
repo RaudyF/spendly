@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 import { useTheme } from '@/components/theme-provider';
 import { useStore } from '@/store';
 import { useAuth } from '@/components/auth/auth-provider';
-import { Avatar } from '@/components/ui';
+import { Avatar, SyncStatusIndicator } from '@/components/ui';
 import { navItems } from './nav-items';
 
 // Desktop Sidebar
@@ -53,14 +53,17 @@ export const Sidebar: React.FC<{ className?: string }> = ({ className }) => {
       )}
     >
       {/* Logo */}
-      <div className="p-6">
+      <div className="p-6 pb-4">
         <Link href="/dashboard" className="flex items-center gap-3 group">
           <Logo className="scale-90 origin-left" />
         </Link>
+        <div className="mt-3">
+          <SyncStatusIndicator variant="badge" className="w-full justify-between" />
+        </div>
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 px-3 py-4 overflow-y-auto space-y-6">
+      <nav className="flex-1 px-3 py-4 overflow-y-auto sidebar-scrollbar space-y-6">
         {(['PRINCIPAL', 'PLANIFICACIÓN', 'ANÁLISIS', 'CUENTA'] as const).map((section) => {
           const sectionItems = navItems.filter((item) => item.section === section);
           if (sectionItems.length === 0) return null;

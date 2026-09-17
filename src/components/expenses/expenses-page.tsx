@@ -21,6 +21,7 @@ import { Expense, CategoryType } from '@/types';
 import { ExpenseForm, ExpenseItem } from './expense-form';
 import { FilterDropdown, FilterState } from './expense-filter';
 import { getCategoryById } from '@/lib/constants';
+import { TimeNavigator } from '@/components/layout/time-navigator';
 
 // Main Expenses Component with URL query persistence (useSearchParams)
 export const ExpensesPage: React.FC = () => {
@@ -28,6 +29,7 @@ export const ExpensesPage: React.FC = () => {
   const pathname = usePathname();
 
   const expenses = useStore((state) => state.expenses);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
   const deleteExpense = useStore((state) => state.deleteExpense);
   const profile = useStore((state) => state.profile);
 
@@ -111,7 +113,7 @@ export const ExpensesPage: React.FC = () => {
 
   // Filter and sort expenses
   const filteredExpenses = React.useMemo(() => {
-    let result = [...expenses];
+    let result = [...expenses].filter(e => e.date.startsWith(viewingPeriod));
 
     // Search query filter
     if (searchQuery.trim()) {
@@ -148,7 +150,7 @@ export const ExpensesPage: React.FC = () => {
     });
 
     return result;
-  }, [expenses, searchQuery, filters]);
+  }, [expenses, viewingPeriod, searchQuery, filters]);
 
   // Group by date
   const groupedExpenses = React.useMemo(() => {
@@ -196,6 +198,8 @@ export const ExpensesPage: React.FC = () => {
           Añadir Movimiento
         </Button>
       </div>
+
+      <TimeNavigator />
 
       {/* Search and Filters with persistent URL state */}
       <div className="space-y-3">

@@ -13,6 +13,7 @@ import {
   Clock,
 } from 'lucide-react';
 import { cn, formatCurrency } from '@/lib/utils';
+import { getFinancialToday } from '@/lib/time';
 import { itemVariants } from './animations';
 
 interface DisponibleHeroProps {
@@ -23,10 +24,13 @@ interface DisponibleHeroProps {
   totalExpenses: number;
   currency: string;
   activePayCycle: 'Q1' | 'Q2' | 'MONTHLY';
-  currentMonth: string;
+  viewingPeriod: string;
   pendingSalary: number;
   expectedSalary: number;
   salaryReceived: number;
+  initialBalance?: number;
+  q1Pending?: number;
+  q2Pending?: number;
   onConfirmSalary?: (cycle: 'Q1' | 'Q2') => void;
   onConfirmBoth?: () => void;
 }
@@ -39,46 +43,77 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
   totalExpenses,
   currency,
   activePayCycle,
-  currentMonth,
+  viewingPeriod,
   pendingSalary,
   expectedSalary,
   salaryReceived,
+  initialBalance = 0,
+  q1Pending,
+  q2Pending,
   onConfirmSalary,
   onConfirmBoth,
 }) => {
-  // Calculate remaining days in active cycle
-  const now = new Date();
-  const currentDay = now.getDate();
-  const [yearStr, monthStr] = currentMonth.split('-');
+  // Calculate remaining full days in active cycle (explicitly days after today)
+  const financialToday = getFinancialToday();
+  const currentDay = financialToday.getDate();
+  const currentMonthStr = `${financialToday.getFullYear()}-${String(financialToday.getMonth() + 1).padStart(2, '0')}`;
+  const [yearStr, monthStr] = viewingPeriod.split('-');
   const year = parseInt(yearStr, 10);
   const month = parseInt(monthStr, 10);
   const daysInMonth = new Date(year, month, 0).getDate();
 
-  let remainingDays = 0;
-  let cycleLabel = 'Mes Completo';
   let dayProgressText = '';
 
-  if (activePayCycle === 'Q1') {
-    cycleLabel = 'Quincena 1 (1 - 15)';
-    const clampedDay = Math.min(Math.max(currentDay, 1), 15);
-    remainingDays = Math.max(0, 15 - clampedDay + 1);
-    dayProgressText = `Día ${clampedDay} de 15 · ${remainingDays} días restantes`;
-  } else if (activePayCycle === 'Q2') {
-    cycleLabel = `Quincena 2 (16 - ${daysInMonth})`;
-    const q2TotalDays = daysInMonth - 15;
-    const clampedDay = Math.min(Math.max(currentDay - 15, 1), q2TotalDays);
-    remainingDays = Math.max(0, q2TotalDays - clampedDay + 1);
-    dayProgressText = `Día ${clampedDay} de ${q2TotalDays} · ${remainingDays} días restantes`;
+  if (viewingPeriod < currentMonthStr) {
+    dayProgressText = 'Período finalizado';
+  } else if (viewingPeriod > currentMonthStr) {
+    dayProgressText = 'Período futuro';
   } else {
-    cycleLabel = 'Mes Completo';
-    const clampedDay = Math.min(Math.max(currentDay, 1), daysInMonth);
-    remainingDays = Math.max(0, daysInMonth - clampedDay + 1);
-    dayProgressText = `Día ${clampedDay} de ${daysInMonth} · ${remainingDays} días restantes`;
+    // Current period
+    if (activePayCycle === 'Q1') {
+      if (currentDay > 15) {
+        dayProgressText = 'Quincena 1 (1 - 15) · Finalizada';
+      } else {
+        const remainingFullDays = 15 - currentDay;
+        if (remainingFullDays === 0) {
+          dayProgressText = `Día 15 de 15 · Último día del ciclo (hoy)`;
+        } else if (remainingFullDays === 1) {
+          dayProgressText = `Día ${currentDay} de 15 · 1 día completo restante (después de hoy)`;
+        } else {
+          dayProgressText = `Día ${currentDay} de 15 · ${remainingFullDays} días completos restantes (después de hoy)`;
+        }
+      }
+    } else if (activePayCycle === 'Q2') {
+      if (currentDay < 16) {
+        const daysToStart = 16 - currentDay;
+        dayProgressText = `Quincena 2 (16 - ${daysInMonth}) · Inicia en ${daysToStart} ${daysToStart === 1 ? 'día' : 'días'} (después de hoy)`;
+      } else {
+        const q2TotalDays = daysInMonth - 15;
+        const q2Day = currentDay - 15;
+        const remainingFullDays = Math.max(0, daysInMonth - currentDay);
+        if (remainingFullDays === 0) {
+          dayProgressText = `Día ${q2Day} de ${q2TotalDays} · Último día del ciclo (hoy)`;
+        } else if (remainingFullDays === 1) {
+          dayProgressText = `Día ${q2Day} de ${q2TotalDays} · 1 día completo restante (después de hoy)`;
+        } else {
+          dayProgressText = `Día ${q2Day} de ${q2TotalDays} · ${remainingFullDays} días completos restantes (después de hoy)`;
+        }
+      }
+    } else {
+      // Mes Completo
+      const remainingFullDays = Math.max(0, daysInMonth - currentDay);
+      if (remainingFullDays === 0) {
+        dayProgressText = `Día ${currentDay} de ${daysInMonth} · Último día del mes (hoy)`;
+      } else if (remainingFullDays === 1) {
+        dayProgressText = `Día ${currentDay} de ${daysInMonth} · 1 día completo restante (después de hoy)`;
+      } else {
+        dayProgressText = `Día ${currentDay} de ${daysInMonth} · ${remainingFullDays} días completos restantes (después de hoy)`;
+      }
+    }
   }
 
-  
-
   const isHealthy = freeAvailable >= 0;
+  const isBothQuotasPending = (q1Pending ?? 0) > 0 && (q2Pending ?? 0) > 0;
 
   return (
     <motion.div
@@ -140,6 +175,19 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
                 Proyectado con nómina: {formatCurrency(projectedFreeAvailable, currency)}
               </span>
             )}
+
+            {initialBalance !== 0 && (
+              <span
+                className={`text-xs px-2.5 py-1 rounded-lg border font-medium ${
+                  initialBalance > 0
+                    ? 'bg-emerald-50 dark:bg-emerald-950/30 text-emerald-700 dark:text-emerald-300 border-emerald-200 dark:border-emerald-800/50'
+                    : 'bg-rose-50 dark:bg-rose-950/30 text-rose-700 dark:text-rose-300 border-rose-200 dark:border-rose-800/50'
+                }`}
+              >
+                {initialBalance > 0 ? 'Incluye +' : 'Déficit arrastrado '}
+                {formatCurrency(initialBalance, currency)} de saldo inicial
+              </span>
+            )}
           </div>
 
           <p className="text-xs lg:text-sm text-surface-500 dark:text-surface-400 mt-2">
@@ -165,7 +213,9 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
                   onClick={onConfirmBoth}
                   className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-xs transition-colors shadow-sm"
                 >
-                  Confirmar ambas nóminas ({formatCurrency(pendingSalary, currency)})
+                  {isBothQuotasPending
+                    ? `Confirmar ambas nóminas (${formatCurrency(pendingSalary, currency)})`
+                    : `Confirmar nómina pendiente (${formatCurrency(pendingSalary, currency)})`}
                 </button>
               )
             ) : (
@@ -174,7 +224,7 @@ export const DisponibleHero: React.FC<DisponibleHeroProps> = ({
                   onClick={() => onConfirmSalary(activePayCycle as 'Q1' | 'Q2')}
                   className="px-3 py-1.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg text-xs transition-colors shadow-sm"
                 >
-                  Confirmar cobro ({formatCurrency(pendingSalary, currency)})
+                  Confirmar nómina pendiente ({formatCurrency(pendingSalary, currency)})
                 </button>
               )
             )}

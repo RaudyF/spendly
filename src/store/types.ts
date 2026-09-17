@@ -18,8 +18,18 @@ export interface DatabaseStatus {
   message: string;
 }
 
+export type SyncStatus =
+  | 'saved_locally'
+  | 'syncing'
+  | 'synced'
+  | 'offline'
+  | 'error';
+
 export interface SyncState {
+  status: SyncStatus;
+  isOnline: boolean;
   isSyncing: boolean;
+  pendingChangesCount: number;
   lastSyncTime: string | null;
   syncError: string | null;
   dbStatus?: DatabaseStatus | null;
@@ -31,6 +41,9 @@ export interface AppState {
   incomes: Income[];
   budgets: Budget[];
   obligations: Obligation[];
+  recurringObligations: import('@/types').RecurringObligation[];
+  periodStates: import('@/types').PeriodState[];
+  periodRollovers: import('@/types').PeriodRollover[];
   goals: SavingsGoal[];
   insights: AIInsight[];
   profile: UserProfile | null;
@@ -39,6 +52,7 @@ export interface AppState {
   isLoading: boolean;
   isOnboarded: boolean;
   currentMonth: string;
+  viewingPeriod: string;
   activePayCycle: PayCycle;
   theme: 'light' | 'dark' | 'system';
   currentUserId: string | null;
@@ -73,6 +87,36 @@ export interface AppState {
   updateObligation: (id: string, updates: Partial<Obligation>) => Promise<void>;
   deleteObligation: (id: string) => Promise<void>;
 
+  addRecurringObligation: (obligation: Omit<import('@/types').RecurringObligation, 'id' | 'createdAt' | 'updatedAt'>) => Promise<import('@/types').RecurringObligation>;
+  updateRecurringObligation: (id: string, updates: Partial<import('@/types').RecurringObligation>) => Promise<void>;
+  deleteRecurringObligation: (id: string) => Promise<void>;
+
+  ensurePeriodInitialized: (period: string) => Promise<void>;
+  generatePeriodObligations: (period: string) => Promise<{ created: number; skipped: number; alreadyExisted: number }>;
+  registerPayment: (obligationId: string, amount: number, realDate: string, payCycle: import('@/types').PayCycle, financialPeriod?: string) => Promise<Expense | null | void>;
+  revertPayment: (expenseId: string, obligationId: string) => Promise<void>;
+  cancelObligation: (obligationId: string) => Promise<void>;
+
+  // Period Closing & Rollover actions
+  getPeriodState: (period: string, cycle: import('@/types').PeriodCycle) => import('@/types').PeriodState | undefined;
+  getEffectivePeriodStatus: (period: string, cycle: import('@/types').PeriodCycle) => import('@/types').PeriodStatus;
+  isPeriodClosed: (period: string, cycle?: import('@/types').PeriodCycle) => boolean;
+  calculatePeriodSummary: (period: string, cycle: import('@/types').PeriodCycle) => import('@/types').PeriodFinancialSummary;
+  getRolloversForPeriod: (period: string, cycle: import('@/types').PeriodCycle) => { received: import('@/types').PeriodRollover[]; sent: import('@/types').PeriodRollover[] };
+  closePeriod: (params: {
+    period: string;
+    cycle: import('@/types').PeriodCycle;
+    carryAmount?: number;
+    goalAllocation?: { goalId: string; amount: number };
+    destinationPeriod?: string;
+    destinationCycle?: import('@/types').PeriodCycle;
+  }) => Promise<import('@/types').PeriodState>;
+  reopenPeriod: (params: {
+    period: string;
+    cycle: import('@/types').PeriodCycle;
+    reason: string;
+  }) => Promise<import('@/types').PeriodState>;
+
   // Goal actions
   addGoal: (goal: Omit<SavingsGoal, 'id' | 'createdAt' | 'updatedAt'>) => Promise<SavingsGoal>;
   updateGoal: (id: string, updates: Partial<SavingsGoal>) => Promise<void>;
@@ -92,6 +136,15 @@ export interface AppState {
   syncFromCloud: () => Promise<{ success: boolean; error?: string }>;
   clearSyncError: () => void;
   checkDatabaseStatus: () => Promise<DatabaseStatus>;
+  enqueuePendingChange: (change: {
+    entityType: import('@/lib/db').PendingChange['entityType'];
+    action: import('@/lib/db').PendingChange['action'];
+    entityId: string;
+    payload?: any;
+  }) => Promise<void>;
+  processPendingQueue: () => Promise<{ success: boolean; syncedCount?: number; error?: string }>;
+  scheduleBackgroundSync: () => void;
+  setOnlineStatus: (isOnline: boolean) => void;
   restoreData: (
     data: any,
     mode: 'replace' | 'merge'
@@ -100,6 +153,7 @@ export interface AppState {
   // Utility
   recalculateStats: () => void;
   setCurrentMonth: (month: string) => void;
+  setViewingPeriod: (period: string) => void;
   setActivePayCycle: (cycle: PayCycle) => void;
   resetStore: () => Promise<void>;
 }

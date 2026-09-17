@@ -2,32 +2,39 @@
 
 export type PayCycle = 'Q1' | 'Q2' | 'MONTHLY';
 
-export interface Expense {
+export interface BaseSyncEntity {
   id: string;
+  userId?: string;
+  createdAt: string;
+  updatedAt: string;
+  deletedAt?: string | null;
+  source?: string;
+  sourceId?: string;
+}
+
+export interface Expense extends BaseSyncEntity {
   amount: number;
   description: string;
   category: CategoryType;
   date: string;
-  createdAt: string;
-  updatedAt: string;
   isRecurring?: boolean;
   recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
   payCycle?: PayCycle;
   notes?: string;
   tags?: string[];
   obligationId?: string;
+  status?: 'active' | 'reverted';
+  financialPeriod?: string;
+  realDate?: string;
 }
 
 export type IncomeClassification = 'salary' | 'additional';
 export type IncomeStatus = 'expected' | 'received';
 
-export interface Income {
-  id: string;
+export interface Income extends BaseSyncEntity {
   amount: number;
   source: string;
   date: string;
-  createdAt: string;
-  updatedAt: string;
   isRecurring?: boolean;
   recurringFrequency?: 'weekly' | 'monthly' | 'yearly';
   payCycle?: PayCycle;
@@ -35,45 +42,55 @@ export interface Income {
   status?: IncomeStatus;
 }
 
-export interface Budget {
-  id: string;
+export interface Budget extends BaseSyncEntity {
   category: CategoryType;
   limit: number;
   spent: number;
   month: string;
   periodType?: PayCycle;
-  createdAt: string;
-  updatedAt: string;
 }
 
-export interface Obligation {
-  id: string;
+export type RecurrenceFrequency = 'monthly' | 'biweekly';
+
+export interface RecurringObligation extends BaseSyncEntity {
+  name: string;
+  amount: number;
+  category: CategoryType;
+  frequency: RecurrenceFrequency;
+  dayOfMonth: number;
+  payCycle: PayCycle;
+  startDate: string; // YYYY-MM or YYYY-MM-DD
+  endDate?: string; // YYYY-MM or YYYY-MM-DD
+  isActive: boolean;
+}
+
+export type ObligationStatus = 'pending' | 'partial' | 'paid' | 'overdue' | 'cancelled';
+
+export interface Obligation extends BaseSyncEntity {
   name: string;
   amount: number;
   category: CategoryType;
   dueDate?: string;
   payCycle: PayCycle;
-  isPaid: boolean;
-  createdAt: string;
-  updatedAt: string;
+  isPaid: boolean; // deprecated but kept for compat
+  status?: ObligationStatus; // new
+  period: string; // YYYY-MM
+  templateId?: string; // Link back to RecurringObligation
+  idempotencyKey?: string; // Unique key: userId + templateId + period
 }
 
-export interface SavingsGoal {
-  id: string;
+export interface SavingsGoal extends BaseSyncEntity {
   name: string;
   targetAmount: number;
   currentAmount: number;
   deadline?: string;
-  createdAt: string;
-  updatedAt: string;
   color: string;
   icon: string;
 }
 
 export type IncomeFrequency = 'monthly' | 'biweekly' | 'variable';
 
-export interface UserProfile {
-  id: string;
+export interface UserProfile extends BaseSyncEntity {
   name: string;
   email?: string;
   photoURL?: string;
@@ -81,8 +98,6 @@ export interface UserProfile {
   incomeFrequency?: IncomeFrequency;
   currency: string;
   onboardingCompleted: boolean;
-  createdAt: string;
-  updatedAt: string;
 }
 
 export interface UserPreferences {
@@ -164,6 +179,7 @@ export interface MonthlyStats {
     expenses: number;
     committed: number;
     freeAvailable: number;
+    initialBalance?: number;
   };
   q2Stats?: {
     income: number;
@@ -175,7 +191,75 @@ export interface MonthlyStats {
     expenses: number;
     committed: number;
     freeAvailable: number;
+    initialBalance?: number;
   };
+  initialBalance?: number;
+}
+
+// Phase 5: Period Closing & Rollover Types
+export type PeriodStatus = 'open' | 'pending_review' | 'closed';
+export type PeriodCycle = 'Q1' | 'Q2' | 'MONTHLY';
+
+export interface ObligationBreakdownSummary {
+  totalCount: number;
+  paidCount: number;
+  partialCount: number;
+  pendingCount: number;
+  cancelledCount: number;
+  totalCommitted: number;
+  paidAmount: number;
+  pendingAmount: number;
+}
+
+export interface PeriodFinancialSummary {
+  period: string; // YYYY-MM
+  cycle: PeriodCycle;
+  expectedIncome: number;
+  receivedIncome: number;
+  pendingIncome: number;
+  salaryReceived: number;
+  additionalReceived: number;
+  totalExpenses: number;
+  obligations: ObligationBreakdownSummary;
+  budgetSpent: number;
+  budgetLimit: number;
+  initialBalance: number; // Saldo inicial por arrastre recibido
+  realFreeAvailable: number; // Disponible real (sobre ingresos reales recibidos)
+  projectedFreeAvailable: number; // Disponible proyectado (con ingresos esperados)
+  eligibleCarryAmount: number; // Sobrante o déficit elegible para arrastre
+  carryType: 'surplus' | 'deficit' | 'zero';
+  closedAt: string;
+}
+
+export interface PeriodState extends BaseSyncEntity {
+  period: string; // YYYY-MM
+  cycle: PeriodCycle;
+  status: PeriodStatus;
+  closedAt?: string;
+  reopenedAt?: string;
+  reopenReason?: string;
+  frozenSummary?: PeriodFinancialSummary;
+}
+
+export type RolloverType = 'surplus' | 'deficit';
+export type RolloverStatus = 'pending' | 'applied' | 'cancelled';
+
+export interface RolloverGoalAllocation {
+  goalId: string;
+  goalName: string;
+  amount: number;
+}
+
+export interface PeriodRollover extends BaseSyncEntity {
+  sourcePeriod: string; // YYYY-MM
+  sourceCycle: PeriodCycle;
+  destinationPeriod: string; // YYYY-MM
+  destinationCycle: PeriodCycle;
+  amount: number; // Monto real transferido
+  type: RolloverType;
+  status: RolloverStatus;
+  idempotencyKey: string; // userId_srcPeriod_srcCycle_destPeriod_destCycle
+  goalAllocation?: RolloverGoalAllocation;
 }
 
 export interface ChartDataPoint {

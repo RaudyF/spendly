@@ -132,4 +132,15 @@ export function getCurrentUser(): AuthUser | null {
   return user ? mapFirebaseUser(user) : null;
 }
 
+export async function getAuthToken(forceRefresh: boolean = false): Promise<string | null> {
+  const user = auth.currentUser;
+  if (!user) return null;
+  try {
+    return await user.getIdToken(forceRefresh);
+  } catch (error) {
+    console.error('[Firebase] Error obtaining ID token:', error);
+    return null;
+  }
+}
+
 export { auth };

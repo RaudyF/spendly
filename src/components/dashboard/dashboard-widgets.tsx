@@ -15,11 +15,11 @@ import { itemVariants } from './animations';
 export const RecentTransactions: React.FC = () => {
   const expenses = useStore((state) => state.expenses);
   const profile = useStore((state) => state.profile);
-  const currentMonth = useStore((state) => state.currentMonth);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
   const activePayCycle = useStore((state) => state.activePayCycle);
 
   const filteredExpenses = expenses.filter((e) => {
-    if (!e.date.startsWith(currentMonth)) return false;
+    if (!e.date.startsWith(viewingPeriod)) return false;
     if (activePayCycle === 'MONTHLY') return true;
     return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
   });
@@ -97,13 +97,13 @@ export const RecentTransactions: React.FC = () => {
 // Budget Overview Component
 export const BudgetOverview: React.FC = () => {
   const budgets = useStore((state) => state.budgets);
-  const currentMonth = useStore((state) => state.currentMonth);
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
   const profile = useStore((state) => state.profile);
 
   // Deduplicate by category so no duplicate rows appear
   const monthBudgets = Object.values(
     budgets
-      .filter((b) => b.month === currentMonth)
+      .filter((b) => b.month === viewingPeriod)
       .reduce<Record<string, (typeof budgets)[0]>>((acc, b) => {
         if (!acc[b.category] || b.limit > acc[b.category].limit) {
           acc[b.category] = b;

@@ -6,11 +6,16 @@ import {
   incomesDB,
   budgetsDB,
   obligationsDB,
+  recurringObligationsDB,
+  periodStatesDB,
+  periodRolloversDB,
   goalsDB,
   profileDB,
   insightsDB,
+  syncQueueDB,
 } from '@/lib/db';
 import { getCurrentMonth, getPayCycleFromDate } from '@/lib/utils';
+import { getFinancialMonth } from '@/lib/time';
 import { Income, UserProfile } from '@/types';
 import { AppState } from './types';
 import {
@@ -18,6 +23,7 @@ import {
   createIncomeActions,
   createBudgetActions,
   createObligationActions,
+  createPeriodActions,
   createGoalActions,
   createProfileActions,
   createSyncActions,
@@ -111,19 +117,26 @@ export const useStore = create<AppState>()(
       incomes: [],
       budgets: [],
       obligations: [],
+      recurringObligations: [],
+      periodStates: [],
+      periodRollovers: [],
       goals: [],
       insights: [],
       profile: null,
       isLoading: true,
       isOnboarded: false,
       currentMonth: getCurrentMonth(),
+      viewingPeriod: getFinancialMonth(),
       activePayCycle: 'MONTHLY',
       theme: 'dark',
       monthlyStats: null,
       financialHealth: null,
       currentUserId: null,
       sync: {
+        status: typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'saved_locally',
+        isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
         isSyncing: false,
+        pendingChangesCount: 0,
         lastSyncTime: null,
         syncError: null,
       },
@@ -135,15 +148,19 @@ export const useStore = create<AppState>()(
         try {
           await db.init(userId);
 
-          const [expenses, incomes, budgets, obligations, goals, insights, profile] =
+          const [expenses, incomes, budgets, obligations, recurringObligations, periodStates, periodRollovers, goals, insights, profile, pendingChanges] =
             await Promise.all([
               expensesDB.getAll(),
               incomesDB.getAll(),
               budgetsDB.getAll(),
               obligationsDB.getAll(),
+              recurringObligationsDB.getAll(),
+              periodStatesDB.getAll(),
+              periodRolloversDB.getAll(),
               goalsDB.getAll(),
               insightsDB.getAll(),
               profileDB.get(),
+              syncQueueDB.getAll().catch(() => []),
             ]);
 
           const cleanIncomes = await sanitizeSalaryIncomes(
@@ -170,19 +187,79 @@ export const useStore = create<AppState>()(
 
           const isOnboarded = profile?.onboardingCompleted || false;
 
-          set({
+          // Non-destructive migration for recurringObligations (ensure frequency & startDate defaults)
+          const migratedRecurring = recurringObligations.map((r) => ({
+            ...r,
+            frequency: r.frequency || 'monthly',
+            startDate: r.startDate || (r.createdAt ? r.createdAt.slice(0, 7) : '2026-01'),
+            isActive: r.isActive !== undefined ? r.isActive : true,
+          }));
+
+          // Deduplicate recurring obligations by ID
+          const seenRecurring = new Map<string, typeof migratedRecurring[0]>();
+          for (const r of migratedRecurring) {
+            if (!seenRecurring.has(r.id)) {
+              seenRecurring.set(r.id, r);
+            }
+          }
+          const cleanRecurring = Array.from(seenRecurring.values());
+
+          // Deduplicate generated obligations by idempotencyKey or (templateId + period)
+          const seenObligations = new Map<string, typeof obligations[0]>();
+          const duplicateObligationIds: string[] = [];
+          for (const o of obligations) {
+            if (o.templateId && o.period) {
+              const dedupKey = o.idempotencyKey || `${userId || 'local_user'}_${o.templateId}_${o.period}`;
+              if (seenObligations.has(dedupKey)) {
+                duplicateObligationIds.push(o.id);
+              } else {
+                seenObligations.set(dedupKey, o);
+              }
+            } else {
+              seenObligations.set(o.id, o);
+            }
+          }
+          const cleanObligations = Array.from(seenObligations.values());
+          duplicateObligationIds.forEach((id) => {
+            obligationsDB.delete(id).catch((err) => console.error('Error deleting duplicate obligation:', err));
+          });
+
+          const isOnline = typeof navigator !== 'undefined' ? navigator.onLine : true;
+          const pendingCount = (pendingChanges && pendingChanges.length) || 0;
+
+          set((state) => ({
             expenses,
             incomes: cleanIncomes,
             budgets: cleanBudgets,
-            obligations,
+            obligations: cleanObligations,
+            recurringObligations: cleanRecurring,
+            periodStates,
+            periodRollovers,
             goals,
             insights,
             profile: profile || null,
             isOnboarded,
             currentUserId: userId || null,
-          });
+            sync: {
+              ...state.sync,
+              isOnline,
+              pendingChangesCount: pendingCount,
+              status: !isOnline
+                ? 'offline'
+                : pendingCount > 0
+                ? 'saved_locally'
+                : state.sync.status,
+            },
+          }));
 
           get().recalculateStats();
+
+          // If online and logged in, auto-trigger background sync
+          if (isOnline && userId) {
+            get().processPendingQueue().catch((err) => {
+              console.warn('[Store] Initial auto-sync on load:', err);
+            });
+          }
         } catch (error) {
           console.error('Failed to initialize database:', error);
         } finally {
@@ -197,6 +274,7 @@ export const useStore = create<AppState>()(
       ...createIncomeActions(set, get),
       ...createBudgetActions(set, get),
       ...createObligationActions(set, get),
+      ...createPeriodActions(set, get),
       ...createGoalActions(set, get),
       ...createProfileActions(set, get),
       ...createSyncActions(set, get),
@@ -210,9 +288,13 @@ export const useStore = create<AppState>()(
             incomesDB.clear(),
             budgetsDB.clear(),
             obligationsDB.clear(),
+            recurringObligationsDB.clear(),
+            periodStatesDB.clear(),
+            periodRolloversDB.clear(),
             goalsDB.clear(),
             insightsDB.clear(),
             profileDB.clear(),
+            syncQueueDB.clear(),
           ]);
         } catch (error) {
           console.error('Failed to clear IndexedDB:', error);
@@ -223,12 +305,23 @@ export const useStore = create<AppState>()(
           incomes: [],
           budgets: [],
           obligations: [],
+          recurringObligations: [],
+          periodStates: [],
+          periodRollovers: [],
           goals: [],
           insights: [],
           profile: null,
           isOnboarded: false,
           monthlyStats: null,
           financialHealth: null,
+          sync: {
+            status: typeof navigator !== 'undefined' && !navigator.onLine ? 'offline' : 'saved_locally',
+            isOnline: typeof navigator !== 'undefined' ? navigator.onLine : true,
+            isSyncing: false,
+            pendingChangesCount: 0,
+            lastSyncTime: null,
+            syncError: null,
+          },
         });
       },
     }),

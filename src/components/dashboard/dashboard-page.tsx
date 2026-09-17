@@ -14,6 +14,11 @@ import { DisponibleHero } from './disponible-hero';
 import { SpendingTrend } from './spending-trend';
 import { CategoryDonut } from './category-donut';
 
+import { TimeNavigator } from '@/components/layout/time-navigator';
+import { PeriodStatusBanner } from '@/components/period';
+
+import { getPayCycleBounds } from '@/lib/time';
+
 // Main Dashboard Component
 export const Dashboard: React.FC = () => {
   const profile = useStore((state) => state.profile);
@@ -23,7 +28,8 @@ export const Dashboard: React.FC = () => {
   const setActivePayCycle = useStore((state) => state.setActivePayCycle);
   const refreshInsights = useStore((state) => state.refreshInsights);
   const addIncome = useStore((state) => state.addIncome);
-  const currentMonth = useStore((state) => state.currentMonth);
+  const currentMonth = useStore((state) => state.currentMonth); // Keeping for compatibility if needed elsewhere
+  const viewingPeriod = useStore((state) => state.viewingPeriod);
 
   React.useEffect(() => {
     refreshInsights();
@@ -63,8 +69,8 @@ export const Dashboard: React.FC = () => {
     if (pending <= 0) return;
 
     const dateStr = cycle === 'Q1'
-      ? `${currentMonth}-15T12:00:00.000Z`
-      : `${currentMonth}-28T12:00:00.000Z`;
+      ? `${viewingPeriod}-15T12:00:00.000Z`
+      : `${viewingPeriod}-${getPayCycleBounds(viewingPeriod, 'Q2').end.getDate()}T12:00:00.000Z`;
 
     await addIncome({
       amount: pending,
@@ -107,6 +113,9 @@ export const Dashboard: React.FC = () => {
           <p className="mt-1 text-sm sm:text-base text-surface-500">
             Tu resumen financiero para este período
           </p>
+          <div className="mt-4">
+            <TimeNavigator />
+          </div>
         </div>
 
         {/* PayCycle Selector */}
@@ -127,6 +136,11 @@ export const Dashboard: React.FC = () => {
         </div>
       </motion.div>
 
+      {/* Period Status & Closing Banner */}
+      <motion.div variants={itemVariants}>
+        <PeriodStatusBanner />
+      </motion.div>
+
       {/* Disponible Hero (Landing aesthetic center) */}
       <DisponibleHero
         freeAvailable={freeAvailable}
@@ -136,10 +150,13 @@ export const Dashboard: React.FC = () => {
         totalExpenses={totalExpenses}
         currency={currency}
         activePayCycle={activePayCycle}
-        currentMonth={currentMonth}
+        viewingPeriod={viewingPeriod}
         pendingSalary={activePayCycle === 'MONTHLY' ? q1Pending + q2Pending : activePayCycle === 'Q1' ? q1Pending : q2Pending}
         expectedSalary={activePayCycle === 'MONTHLY' ? q1Expected + q2Expected : activePayCycle === 'Q1' ? q1Expected : q2Expected}
         salaryReceived={activePayCycle === 'MONTHLY' ? q1Received + q2Received : activePayCycle === 'Q1' ? q1Received : q2Received}
+        initialBalance={monthlyStats?.initialBalance || 0}
+        q1Pending={q1Pending}
+        q2Pending={q2Pending}
         onConfirmSalary={handleConfirmSalary}
         onConfirmBoth={handleConfirmBoth}
       />
@@ -206,7 +223,7 @@ export const Dashboard: React.FC = () => {
           (o) => activePayCycle === 'MONTHLY' || o.payCycle === activePayCycle
         );
         const expensesList = (useStore.getState().expenses || []).filter((e) => {
-          if (!e.date.startsWith(currentMonth)) return false;
+          if (!e.date.startsWith(viewingPeriod)) return false;
           if (activePayCycle === 'MONTHLY') return true;
           return (e.payCycle || getPayCycleFromDate(e.date)) === activePayCycle;
         });
@@ -220,7 +237,7 @@ export const Dashboard: React.FC = () => {
         if (hasObligations) {
           modules.push(<ObligationsOverview key="obligations" />);
         }
-        const hasBudgets = (useStore.getState().budgets || []).some((b) => b.month === currentMonth);
+        const hasBudgets = (useStore.getState().budgets || []).some((b) => b.month === viewingPeriod);
         if (hasBudgets) {
           modules.push(<BudgetOverview key="budget" />);
         }
